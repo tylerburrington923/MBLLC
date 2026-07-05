@@ -2,6 +2,7 @@
  * @file state.js
  * @description Single Source of Truth State Management Container Layer.
  * Centralized reactive state store for all application data mutations and queries.
+ * PATCH 2: Fixed opening normalization - x/y now 0-1 normalized, not pixels
  */
 
 import { constants } from './constants.js';
@@ -41,9 +42,11 @@ const state = {
     getDefaults() {
         return {
             // Dimensions
-            width: 40,
-            length: 60,
-            height: 14,
+            dimensions: {
+                width: 40,
+                length: 60,
+                height: 14
+            },
             roofPitch: '4:12',
             overhang: 12,
 
@@ -58,7 +61,7 @@ const state = {
             interiorEnabled: false,
             interiorColor: '#E2E8F0',
 
-            // Openings array
+            // Openings array - FIXED: now uses normalized coordinates
             openings: []
         };
     },
@@ -160,19 +163,25 @@ const state = {
 
     /**
      * Add opening (door/window) to building
+     * CRITICAL FIX: Now uses normalized 0-1 coordinates instead of pixels
      * @param {Object} opening - Opening configuration object
      * @returns {string} Unique opening ID
      */
     addOpening(opening) {
         const id = `opening-${Date.now()}`;
+        
+        // CRITICAL: Convert pixel/default values to normalized 0-1
         const fullOpening = {
             id,
-            type: opening.type, // 'overhead', 'bifold', 'slider', 'walk_door', 'window'
-            x: opening.x || 100,
-            y: opening.y || 100,
-            width: opening.width || 10,
-            height: opening.height || 8,
+            type: opening.type,
             face: opening.face || 'front',
+            
+            // NORMALIZED COORDINATES (0-1 scale)
+            x: opening.x !== undefined ? opening.x : 0.4,    // 40% across width
+            y: opening.y !== undefined ? opening.y : 0.3,    // 30% down height
+            width: opening.width !== undefined ? opening.width : 0.15,  // 15% of wall width
+            height: opening.height !== undefined ? opening.height : 0.25, // 25% of wall height
+            
             ...opening
         };
         
@@ -201,12 +210,19 @@ const state = {
 
     /**
      * Update opening properties
+     * CRITICAL: Clamps normalized values to 0-1 range
      * @param {string} openingId - ID of opening to update
      * @param {Object} updates - Properties to update
      */
     updateOpening(openingId, updates) {
         const opening = this.building.openings.find(o => o.id === openingId);
         if (opening) {
+            // Clamp normalized coordinates to 0-1 range
+            if (updates.x !== undefined) updates.x = Math.max(0, Math.min(1, updates.x));
+            if (updates.y !== undefined) updates.y = Math.max(0, Math.min(1, updates.y));
+            if (updates.width !== undefined) updates.width = Math.max(0.05, Math.min(1, updates.width));
+            if (updates.height !== undefined) updates.height = Math.max(0.05, Math.min(1, updates.height));
+            
             Object.assign(opening, updates);
             this.dispatchChange('openings', 'update', opening);
             this.saveToStorage();
@@ -224,6 +240,7 @@ const state = {
 
     /**
      * Get all openings on current face
+     * @param {string} face - Face to filter by
      * @returns {Array} Openings array
      */
     getOpeningsByFace(face) {
@@ -289,7 +306,6 @@ const state = {
             const stored = localStorage.getItem('moravian_estimator_state');
             if (stored) {
                 const stateSnapshot = JSON.parse(stored);
-                // Only load if data is recent (less than 7 days old)
                 const ageMs = Date.now() - stateSnapshot.timestamp;
                 const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
                 
