@@ -1,48 +1,715 @@
-         <section id="gallery" class="gallery" aria-labelledby="gallery-heading">
-            <div class="container">
-                <h2 id="gallery-heading">Completed Projects Portfolio</h2>
-                <p>Showcase of verified building deliveries and completed installations.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Custom engineered post-frame structures by Moravian Builders. Design, estimate, and build your custom workshop, garage, or agricultural barn.">
+    <title>Moravian Builders | Professional Post-Frame Estimator</title>
+    <style>
+        /* CSS RESET & VARIABLES */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --color-navy: #0F172A;
+            --color-navy-light: #1E293B;
+            --color-gold: #D4AF37;
+            --color-gold-hover: #C5A028;
+            --color-slate-50: #F8FAFC;
+            --color-slate-100: #F1F5F9;
+            --color-slate-200: #E2E8F0;
+            --color-slate-400: #94A3B8;
+            --color-slate-600: #475569;
+            --color-slate-900: #0F172A;
+            --color-border: #E2E8F0;
+            --color-danger: #EF4444;
+            --color-success: #10B981;
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --transition: all 0.2s ease;
+            --max-width: 1280px;
+        }
+
+        html { scroll-behavior: smooth; font-family: var(--font-main); color: var(--color-slate-900); background-color: #fff; -webkit-font-smoothing: antialiased; }
+        body { line-height: 1.5; padding-bottom: 0; }
+        .container { width: 100%; max-width: var(--max-width); margin: 0 auto; padding: 0 24px; }
+        img { max-width: 100%; height: auto; display: block; }
+        
+        /* ACCESSIBILITY */
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+        *:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+
+        /* BUTTONS */
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; font-size: 0.95rem; font-weight: 600; border-radius: var(--radius-sm); border: 1px solid transparent; cursor: pointer; text-decoration: none; transition: var(--transition); }
+        .btn-gold { background-color: var(--color-gold); color: var(--color-navy); }
+        .btn-gold:hover { background-color: var(--color-gold-hover); }
+        .btn-navy { background-color: var(--color-navy); color: #fff; }
+        .btn-navy:hover { background-color: var(--color-navy-light); }
+        .btn-outline { background-color: transparent; border-color: var(--color-border); color: var(--color-slate-600); }
+        .btn-outline:hover { background-color: var(--color-slate-50); border-color: var(--color-slate-400); color: var(--color-slate-900); }
+        .btn-danger { background-color: var(--color-danger); color: #fff; }
+        .btn-full { width: 100%; display: flex; }
+
+        /* HEADER */
+        .header { position: sticky; top: 0; z-index: 100; background-color: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding: 16px 0; transition: var(--transition); }
+        .header-container { display: flex; align-items: center; justify-content: space-between; }
+        .logo { font-size: 1.25rem; font-weight: 700; color: #fff; text-decoration: none; letter-spacing: -0.025em; }
+        .logo span { color: var(--color-gold); }
+        .nav { display: flex; gap: 32px; }
+        .nav-link { font-size: 0.95rem; font-weight: 500; color: var(--color-slate-400); text-decoration: none; transition: var(--transition); }
+        .nav-link:hover, .nav-link.active { color: #fff; }
+        .nav-link.active { position: relative; }
+        .nav-link.active::after { content: ''; position: absolute; bottom: -6px; left: 0; width: 100%; height: 2px; background-color: var(--color-gold); }
+
+        /* HERO */
+        .hero { position: relative; height: 600px; display: flex; align-items: center; overflow: hidden; background-color: var(--color-navy); color: #fff; }
+        .hero-slider { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .hero-slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; opacity: 0; transition: opacity 1s ease-in-out; }
+        .hero-slide.active { opacity: 0.4; }
+        .hero-content { position: relative; z-index: 2; max-width: 640px; padding: 0 24px; }
+        .hero h1 { font-size: 3.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 16px; letter-spacing: -0.03em; }
+        .hero h1 span { color: var(--color-gold); }
+        .hero p { font-size: 1.25rem; color: var(--color-slate-200); margin-bottom: 32px; font-weight: 400; }
+        .hero-actions { display: flex; gap: 16px; }
+
+        /* TRUST STRIP */
+        .trust-strip { background-color: var(--color-slate-50); border-bottom: 1px solid var(--color-border); padding: 24px 0; }
+        .trust-container { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+        .trust-item { display: flex; align-items: center; gap: 12px; }
+        .trust-item span { font-size: 1.5rem; }
+        .trust-item h3 { font-size: 1rem; font-weight: 600; color: var(--color-slate-600); }
+
+        /* GALLERY (CAROUSEL SYSTEM) */
+        .gallery { padding: 80px 0; background-color: #fff; border-bottom: 1px solid var(--color-border); }
+        .gallery-header { margin-bottom: 40px; text-align: center; }
+        .gallery-header h2 { font-size: 2.25rem; font-weight: 800; color: var(--color-navy); letter-spacing: -0.025em; margin-bottom: 8px; }
+        .gallery-header p { font-size: 1.1rem; color: var(--color-slate-600); }
+        .carousel-container { position: relative; max-width: 900px; margin: 0 auto; background: var(--color-slate-50); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-md); }
+        .carousel-view { position: relative; height: 500px; background-color: var(--color-navy); display: flex; align-items: center; justify-content: center; }
+        .carousel-img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s ease-in-out; }
+        .carousel-nav-btn { position: absolute; top: 50%; transform: translateY(-50%); z-index: 10; width: 48px; height: 48px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.9); border: 1px solid var(--color-border); font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); box-shadow: var(--shadow-sm); }
+        .carousel-nav-btn:hover { background-color: #fff; color: var(--color-gold); transform: translateY(-50%) scale(1.05); }
+        #carousel-prev { left: 24px; }
+        #carousel-next { right: 24px; }
+        .carousel-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(15, 23, 42, 0.95)); padding: 40px 32px 32px 32px; color: #fff; display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 24px; }
+        .carousel-caption h3 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; color: #fff; }
+        .carousel-caption p { font-size: 0.95rem; color: var(--color-slate-300); }
+        .carousel-controls-bottom { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 16px; background-color: #fff; border-top: 1px solid var(--color-border); }
+        .carousel-dots { display: flex; gap: 8px; }
+        .carousel-dot { width: 10px; height: 10px; border-radius: 50%; background-color: var(--color-slate-200); border: none; cursor: pointer; transition: var(--transition); }
+        .carousel-dot.active { background-color: var(--color-gold); transform: scale(1.2); }
+
+        /* LIGHTBOX MODAL */
+        .lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 200; background-color: rgba(15, 23, 42, 0.98); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .lightbox.active { opacity: 1; pointer-events: auto; }
+        .lightbox-content { position: relative; max-width: 90%; max-height: 85vh; display: flex; align-items: center; justify-content: center; }
+        .lightbox-img { max-width: 100%; max-height: 85vh; object-fit: contain; border-radius: var(--radius-sm); box-shadow: var(--shadow-lg); }
+        .lightbox-close { position: absolute; top: -56px; right: 0; background: transparent; border: none; color: #fff; font-size: 2rem; cursor: pointer; opacity: 0.7; transition: var(--transition); }
+        .lightbox-close:hover { opacity: 1; color: var(--color-gold); }
+        .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255, 255, 255, 0.1); border: none; color: #fff; width: 56px; height: 56px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+        .lightbox-nav:hover { background: rgba(255, 255, 255, 0.2); color: var(--color-gold); }
+        #lightbox-prev { left: -80px; }
+        #lightbox-next { right: -80px; }
+
+        /* CONFIGURATOR */
+        .configurator { padding: 80px 0; background-color: var(--color-slate-50); }
+        .configurator-grid { display: grid; grid-template-columns: 420px 1fr; gap: 40px; align-items: start; }
+        
+        /* CONTROLS (LEFT COLUMN) */
+        .controls { display: flex; flex-direction: column; gap: 24px; max-height: 850px; overflow-y: auto; padding-right: 8px; }
+        .controls::-webkit-scrollbar { width: 6px; }
+        .controls::-webkit-scrollbar-track { background: transparent; }
+        .controls::-webkit-scrollbar-thumb { background-color: var(--color-slate-200); border-radius: 3px; }
+        
+        .card h2 { font-size: 1.15rem; font-weight: 700; color: var(--color-navy); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: space-between; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 0.875rem; font-weight: 600; color: var(--color-slate-600); margin-bottom: 8px; }
+        
+        select, textarea, input[type="number"] { width: 100%; padding: 10px 14px; border: 1px solid var(--color-border); background-color: #fff; border-radius: var(--radius-sm); font-size: 0.95rem; color: var(--color-slate-900); transition: var(--transition); appearance: none; }
+        select { background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 40px; }
+        select:hover, textarea:hover, input:hover { border-color: var(--color-slate-400); }
+        select:focus, textarea:focus, input:focus { border-color: var(--color-gold); outline: none; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15); }
+        
+        .static-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background-color: var(--color-slate-100); border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: 0.95rem; }
+        .static-row .label { font-weight: 600; color: var(--color-slate-600); }
+        .static-row .value { font-weight: 700; color: var(--color-navy); }
+
+        /* SWATCHES */
+        .swatch-row { display: flex; flex-wrap: wrap; gap: 10px; }
+        .swatch-btn { width: 36px; height: 36px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; position: relative; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1), var(--shadow-sm); transition: var(--transition); }
+        .swatch-btn:hover { transform: scale(1.1); }
+        .swatch-btn.active { border-color: #fff; box-shadow: 0 0 0 2px var(--color-navy); transform: scale(1.1); }
+        
+        /* TOGGLES */
+        .toggle-row { display: flex; background-color: var(--color-slate-100); padding: 4px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); }
+        .btn-toggle { flex: 1; text-align: center; padding: 8px; font-size: 0.875rem; font-weight: 600; color: var(--color-slate-600); background: transparent; border: none; cursor: pointer; border-radius: calc(var(--radius-sm) - 2px); transition: var(--transition); }
+        .btn-toggle.active { background-color: #fff; color: var(--color-navy); box-shadow: var(--shadow-sm); }
+        .hidden { display: none !important; }
+
+        /* INJECTOR GRID */
+        .injector-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .btn-inject { display: flex; align-items: center; gap: 10px; padding: 12px; background-color: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 600; color: var(--color-slate-700); cursor: pointer; transition: var(--transition); text-align: left; }
+        .btn-inject:hover { border-color: var(--color-slate-400); background-color: var(--color-slate-50); color: var(--color-navy); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+        .btn-inject .icon { font-size: 1.15rem; width: 24px; text-align: center; }
+
+        /* EDIT PANEL / MODIFIER CARD */
+        .form-inline-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modifier-actions { display: flex; gap: 10px; margin-top: 16px; }
+        .modifier-actions .btn { flex: 1; }
+
+        /* VIEWER & SUMMARY COLUMN (RIGHT COLUMN) */
+        .viewer-column { display: flex; flex-direction: column; gap: 32px; position: sticky; top: 112px; }
+        .viewer-card { background-color: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow-sm); }
+        .viewer-meta h3 { font-size: 1.25rem; font-weight: 800; color: var(--color-navy); }
+        .viewer-meta p { font-size: 0.875rem; color: var(--color-slate-400); font-weight: 500; margin-top: 2px; }
+        .tabs { display: flex; background-color: var(--color-slate-100); padding: 4px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); }
+        .tab-btn { padding: 8px 16px; font-size: 0.875rem; font-weight: 600; color: var(--color-slate-600); background: transparent; border: none; cursor: pointer; border-radius: calc(var(--radius-sm) - 2px); transition: var(--transition); }
+        .tab-btn:hover { color: var(--color-navy); }
+        .tab-btn.active { background-color: #fff; color: var(--color-navy); box-shadow: var(--shadow-sm); }
+        
+        /* SVG VIEWER CANVAS */
+        .viewer-canvas-container { width: 100%; height: 480px; background-color: #0F172A; border-radius: var(--radius-md); position: relative; margin-top: 24px; overflow: hidden; box-shadow: inset 0 4px 12px rgba(0,0,0,0.3); }
+        .viewer-svg { width: 100%; height: 100%; display: block; }
+        
+        /* SVG STYLING ENGINE */
+        .grid-line { stroke: rgba(255, 255, 255, 0.05); stroke-width: 1; }
+        .grid-line-major { stroke: rgba(255, 255, 255, 0.12); stroke-width: 1; }
+        .roof-poly { fill: #334155; stroke: rgba(255,255,255,0.1); stroke-width: 1; transition: fill 0.3s ease; }
+        .wall-rect { fill: #475569; stroke: rgba(255,255,255,0.1); stroke-width: 1; transition: fill 0.3s ease; }
+        .wainscot-rect { fill: #1E293B; stroke: rgba(255,255,255,0.1); stroke-width: 1; transition: fill 0.3s ease; }
+        .opening-rect { fill: #F1F5F9; stroke: #334155; stroke-width: 2; cursor: move; transition: stroke 0.2s ease; }
+        .opening-rect:hover { stroke: var(--color-gold); }
+        .opening-rect.selected { stroke: var(--color-gold); stroke-width: 3; filter: drop-shadow(0 0 4px rgba(212,175,55,0.5)); }
+        .dim-line-svg { stroke: var(--color-slate-400); stroke-width: 1.5; stroke-dasharray: 4 4; }
+        .dim-text { fill: var(--color-slate-400); font-size: 12px; font-weight: 600; font-family: var(--font-main); text-anchor: middle; }
+        
+        .viewer-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-slate-100); font-size: 0.8125rem; color: var(--color-slate-400); font-weight: 500; }
+        .viewer-footer-status { display: inline-flex; align-items: center; gap: 6px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .dot-primary { background-color: var(--color-success); }
+        .dot-accent { background-color: var(--color-gold); }
+
+        /* SUMMARY PANEL */
+        .summary { background-color: var(--color-navy); color: #fff; border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow-md); }
+        .summary-grid { display: grid; grid-template-columns: 1fr 280px; gap: 40px; align-items: center; }
+        .summary-details h4 { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .summary-spec-list { list-style: none; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 24px; }
+        .summary-spec-list dishonesty-item, .summary-spec-list li { font-size: 0.875rem; color: var(--color-slate-300); display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px; }
+        .summary-spec-list li span:last-child { font-weight: 600; color: #fff; }
+        .summary-pricing { text-align: right; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 40px; }
+        .price-lbl { font-size: 0.875rem; font-weight: 600; color: var(--color-slate-400); text-transform: uppercase; letter-spacing: 0.05em; }
+        .price-value { display: block; font-size: 3.25rem; font-weight: 800; color: var(--color-gold); line-height: 1; margin: 6px 0 12px 0; letter-spacing: -0.02em; }
+        .disclaimer { font-size: 0.75rem; color: var(--color-slate-400); line-height: 1.4; }
+
+        /* CONTACT SECTION */
+        .contact { padding: 90px 0; background-color: #fff; }
+        .contact-container { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+        .contact-sidebar h2 { font-size: 2.25rem; font-weight: 800; color: var(--color-navy); letter-spacing: -0.025em; margin-bottom: 16px; line-height: 1.1; }
+        .contact-sidebar p { font-size: 1.05rem; color: var(--color-slate-600); margin-bottom: 32px; }
+        .bullets { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+        .bullets li { display: flex; gap: 12px; font-size: 0.95rem; font-weight: 500; color: var(--color-slate-700); }
+        .bullets .check-icon { color: var(--color-success); font-weight: 700; }
+        .contact-form { background-color: var(--color-slate-50); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 40px; box-shadow: var(--shadow-sm); }
+        .form-stack { display: flex; flex-direction: column; gap: 20px; }
+        .field-error { display: block; font-size: 0.8125rem; color: var(--color-danger); font-weight: 500; margin-top: 4px; min-height: 18px; }
+
+        /* FOOTER */
+        .footer { background-color: var(--color-navy); color: var(--color-slate-400); padding: 64px 0 32px 0; border-top: 4px solid var(--color-gold); }
+        .footer-container { display: grid; grid-template-columns: 1.5fr 1fr 1.5fr; gap: 48px; margin-bottom: 48px; }
+        .footer-brand .logo { display: inline-block; margin-bottom: 16px; }
+        .footer-brand p { font-size: 0.9rem; color: var(--color-slate-400); max-width: 320px; line-height: 1.6; }
+        .footer-nav h4, .footer-contact h4 { font-size: 0.875rem; font-weight: 700; text-transform: uppercase; color: #fff; letter-spacing: 0.05em; margin-bottom: 20px; }
+        .footer-nav-links { display: flex; flex-direction: column; gap: 12px; }
+        .footer-nav-links a { font-size: 0.9rem; color: var(--color-slate-400); text-decoration: none; transition: var(--transition); width: fit-content; }
+        .footer-nav-links a:hover { color: #fff; }
+        .footer-contact address { font-style: normal; font-size: 0.9rem; line-height: 1.6; color: var(--color-slate-300); }
+        .footer-contact p { margin-top: 12px; font-size: 0.9rem; }
+        .footer-contact a { color: var(--color-gold); text-decoration: none; }
+        .footer-contact a:hover { text-decoration: underline; }
+        .footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 32px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8125rem; }
+
+        /* FIXED MOBILE BAR */
+        .mobile-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 90; background-color: rgba(15, 23, 42, 0.98); backdrop-filter: blur(8px); border-top: 2px solid var(--color-gold); padding: 12px 24px; display: none; box-shadow: 0 -4px 10px rgba(0,0,0,0.1); }
+        .mobile-bar-container { display: flex; align-items: center; justify-content: space-between; }
+        .mobile-bar-price .lbl { font-size: 0.75rem; font-weight: 600; color: var(--color-slate-400); text-transform: uppercase; display: block; line-height: 1; }
+        .mobile-bar-price .val { font-size: 1.75rem; font-weight: 800; color: var(--color-gold); line-height: 1.1; margin-top: 2px; display: block; }
+        .mobile-action-bar .btn { padding: 10px 24px; }
+
+        /* RESPONSIVE LAYOUT RESPONSES */
+        @media (max-width: 1100px) {
+            .configurator-grid { grid-template-columns: 1fr; }
+            .controls { max-height: none; }
+            .viewer-column { position: static; }
+            .viewer-canvas-container { height: 420px; }
+        }
+        @media (max-width: 900px) {
+            .hero h1 { font-size: 2.75rem; }
+            .trust-container { grid-template-columns: 1fr; display: grid; gap: 16px; }
+            .carousel-view { height: 380px; }
+            .carousel-overlay { grid-template-columns: 1fr; gap: 16px; }
+            .carousel-overlay .btn { width: 100%; }
+            #carousel-prev, #carousel-next { width: 40px; height: 40px; font-size: 1rem; }
+            #carousel-prev { left: 12px; }
+            #carousel-next { right: 12px; }
+            .contact-container { grid-template-columns: 1fr; gap: 40px; }
+            .footer-container { grid-template-columns: 1fr; gap: 32px; }
+        }
+        @media (max-width: 600px) {
+            .header-cta, .nav { display: none; }
+            .hero { height: 500px; }
+            .hero h1 { font-size: 2.25rem; }
+            .hero p { font-size: 1.1rem; }
+            .hero-actions { flex-direction: column; }
+            .summary-grid { grid-template-columns: 1fr; gap: 24px; }
+            .summary-pricing { border-left: none; padding-left: 0; text-align: left; }
+            .form-row { grid-template-columns: 1fr; gap: 20px; }
+            .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+            .mobile-action-bar { display: block; }
+            body { padding-bottom: 68px; }
+            .viewer-canvas-container { height: 320px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="container header-container">
+            <a href="#home" class="logo" aria-label="Moravian Builders Home">
+                <strong>Moravian</strong><span>Builders</span>
+            </a>
+            <nav class="nav" role="navigation" aria-label="Main Navigation">
+                <a href="#home" class="nav-link active">Home</a>
+                <a href="#configurator" class="nav-link">Estimator</a>
+                <a href="#gallery" class="nav-link">Gallery</a>
+                <a href="#contact" class="nav-link">Contact</a>
+            </nav>
+            <a href="#configurator" class="btn btn-gold header-cta">Start Building</a>
+        </div>
+    </header>
+
+    <main id="main-content">
+        
+        <!-- HERO SECTION -->
+        <section id="home" class="hero" aria-label="Introduction Image Showcase">
+            <div id="hero-slider" class="hero-slider">
+                <!-- Fallback asset strings provided as schema identifiers for JS pipeline assembly injection later -->
+                <div class="hero-slide active" style="background-image: url('images/hero/slide1.jpg');"></div>
+                <div class="hero-slide" style="background-image: url('images/hero/slide2.jpg');"></div>
+                <div class="hero-slide" style="background-image: url('images/hero/slide3.jpg');"></div>
             </div>
-
-            <!-- Gallery Carousel -->
-            <div id="gallery-carousel" class="gallery-carousel" aria-label="Project gallery carousel">
-                <div class="carousel-wrapper">
-                    <img id="carousel-main-image" class="carousel-image" src="" alt="Project image">
-                </div>
-                
-                <div class="carousel-controls">
-                    <button id="carousel-prev" class="carousel-btn carousel-btn-prev" aria-label="Previous project">
-                        <span>‹</span>
-                    </button>
-                    <button id="carousel-next" class="carousel-btn carousel-btn-next" aria-label="Next project">
-                        <span>›</span>
-                    </button>
-                </div>
-
-                <div class="carousel-dots-wrapper">
-                    <div id="carousel-dots" class="carousel-dots" role="tablist" aria-label="Project slides"></div>
-                </div>
-
-                <div class="carousel-caption">
-                    <h3 id="carousel-title">Project Title</h3>
-                    <p id="carousel-description">Project description</p>
-                    <button class="button button-outline button-sm" onclick="gallery.openLightbox()">View Full Image</button>
+            <div class="hero-content">
+                <h1>Moravian Builders<br><span>Post Frame Structures</span></h1>
+                <p>Precision-built post-frame systems designed for real-world use.</p>
+                <div class="hero-actions">
+                    <a href="#configurator" class="btn btn-gold">Start Building</a>
+                    <a href="#gallery" class="btn btn-outline" style="color: #fff; border-color: rgba(255,255,255,0.4)">View Gallery</a>
                 </div>
             </div>
         </section>
 
-        <!-- Lightbox Modal -->
-        <div id="lightbox-modal" class="lightbox-modal" style="display: none;" role="dialog" aria-modal="true" aria-label="Full project image viewer">
-            <div class="lightbox-container">
-                <button class="lightbox-close" aria-label="Close lightbox">&times;</button>
-                
-                <div class="lightbox-image-wrapper">
-                    <img class="lightbox-image" src="" alt="Full project image">
+        <!-- TRUST STRIP -->
+        <section class="trust-strip" aria-label="Core Quality Pillars">
+            <div class="container trust-container">
+                <div class="trust-item">
+                    <span>📐</span>
+                    <h3>Custom Engineered</h3>
                 </div>
-
-                <div class="lightbox-controls">
-                    <button class="lightbox-prev" aria-label="Previous image">‹ Previous</button>
-                    <button class="lightbox-next" aria-label="Next image">Next ›</button>
+                <div class="trust-item">
+                    <span>👨‍👩‍👧‍👦</span>
+                    <h3>Family Operated Construction Team</h3>
+                </div>
+                <div class="trust-item">
+                    <span>🛠️</span>
+                    <h3>Professionally Drafted Systems</h3>
                 </div>
             </div>
+        </section>
+
+        <!-- GALLERY SECTION (UNIFIED CAROUSEL + LIGHTBOX SYSTEM) -->
+        <section id="gallery" class="gallery" aria-labelledby="gallery-heading">
+            <div class="container">
+                <div class="gallery-header">
+                    <h2 id="gallery-heading">Completed Projects Portfolio</h2>
+                    <p>Explore real custom frameworks engineered and assembled by our local team.</p>
+                </div>
+                
+                <div class="carousel-container">
+                    <div class="carousel-view">
+                        <button type="button" id="carousel-prev" class="carousel-nav-btn" aria-label="Previous slide">‹</button>
+                        <!-- Fallback placeholder schema data for JS Array dynamic mapping binding loops later -->
+                        <img id="carousel-main-image" class="carousel-img" src="images/gallery/project1.jpg" alt="Moravian Post-Frame Project Showcase">
+                        <button type="button" id="carousel-next" class="carousel-nav-btn" aria-label="Next slide">›</button>
+                        
+                        <div class="carousel-overlay">
+                            <div class="carousel-caption">
+                                <h3 id="carousel-title">Suburban Workshop Structural Framework</h3>
+                                <p id="carousel-description">Continuous concrete embedded pier footprint foundation layout featuring clean 4:12 pitch framing trusses.</p>
+                            </div>
+                            <button type="button" id="btn-view-full" class="btn btn-gold">View Full Image</button>
+                        </div>
+                    </div>
+                    <div class="carousel-controls-bottom">
+                        <div id="carousel-dots" class="carousel-dots" role="tablist" aria-label="Slideshow Navigation Links Options">
+                            <button type="button" class="carousel-dot active" role="tab" aria-selected="true" aria-label="Slide 1"></button>
+                            <button type="button" class="carousel-dot" role="tab" aria-selected="false" aria-label="Slide 2"></button>
+                            <button type="button" class="carousel-dot" role="tab" aria-selected="false" aria-label="Slide 3"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LIGHTBOX MODAL CONTAINER -->
+        <div id="lightbox-modal" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Fullscreen Image Portfolio Viewer Overlay">
+            <div class="lightbox-content">
+                <button type="button" id="lightbox-close" class="lightbox-close" aria-label="Close Fullscreen Viewer">×</button>
+                <button type="button" id="lightbox-prev" class="lightbox-nav" aria-label="Previous Fullscreen Image">‹</button>
+                <img id="lightbox-image" class="lightbox-img" src="images/gallery/project1.jpg" alt="Active Fullscreen Portfolio View Document">
+                <button type="button" id="lightbox-next" class="lightbox-nav" aria-label="Next Fullscreen Image">›</button>
+            </div>
         </div>
+
+        <!-- MAIN CONFIGURATOR SUBSYSTEM APPLICATION INTERFACE GRID -->
+        <section id="configurator" class="configurator" aria-label="Interactive Estimator Workspace">
+            <div class="container configurator-grid">
+                
+                <!-- INPUT PARAMETERS ARCHITECTURE INTERFACE PANEL COLUMN (LEFT) -->
+                <aside class="controls" aria-label="Enclosure Property Customization Controllers Drawer">
+                    
+                    <!-- 1. DIMENSIONAL SELECTIONS MODULUS DATA CONTAINER CARD -->
+                    <div class="card">
+                        <h2>1. Core Geometry Envelope</h2>
+                        <div class="form-group">
+                            <label for="param-width">Building Frame Width (ft)</label>
+                            <select id="param-width" name="width">
+                                <option value="24">24 Feet</option>
+                                <option value="30" selected>30 Feet</option>
+                                <option value="36">36 Feet</option>
+                                <option value="40">40 Feet</option>
+                                <option value="50">50 Feet</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="param-length">Building Frame Length (ft)</label>
+                            <select id="param-length" name="length">
+                                <option value="30">30 Feet</option>
+                                <option value="40" selected>40 Feet</option>
+                                <option value="48">48 Feet</option>
+                                <option value="60">60 Feet</option>
+                                <option value="80">80 Feet</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="param-height">Clear Eave Height (ft)</label>
+                            <select id="param-height" name="height">
+                                <option value="10">10 Feet Eave Line</option>
+                                <option value="12">12 Feet Eave Line</option>
+                                <option value="14" selected>14 Feet Eave Line</option>
+                                <option value="16">16 Feet Eave Line</option>
+                            </select>
+                        </div>
+                        <div class="static-row">
+                            <span class="label">Engineered Roof Pitch Matrix Standard</span>
+                            <span class="value">4:12 Pitch Fixed System Base</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. MATERIALS METALS EXTERIOR COLOR CONFIGURATOR SELECTIONS CARD CONTAINER -->
+                    <div class="card">
+                        <h2>2. Structural Metal Finishes</h2>
+                        <div class="form-group">
+                            <label>Roof Cladding Sheet Color</label>
+                            <div id="swatches-roof" class="swatch-row" role="radiogroup" aria-label="Roof Metal Plate Color Options Matrix">
+                                <button type="button" class="swatch-btn active" data-value="#334155" style="background-color: #334155;" aria-label="Charcoal Slate Color Gray Swatch"></button>
+                                <button type="button" class="swatch-btn" data-value="#1E293B" style="background-color: #1E293B;" aria-label="Industrial Midnight Charcoal Black Swatch"></button>
+                                <button type="button" class="swatch-btn" data-value="#7F1D1D" style="background-color: #7F1D1D;" aria-label="Traditional Earth Oxide Barn Crimson Red Swatch"></button>
+                                <button type="button" class="swatch-btn" data-value="#14532D" style="background-color: #14532D;" aria-label="Forest Spruce Earth Tone Dark Green Swatch"></button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Wall Siding Sheet Color</label>
+                            <div id="swatches-wall" class="swatch-row" role="radiogroup" aria-label="Wall Cladding Panel Color Swatches Matrix">
+                                <button type="button" class="swatch-btn" data-value="#334155" style="background-color: #334155;" aria-label="Charcoal Slate Color Gray Swatch"></button>
+                                <button type="button" class="swatch-btn active" data-value="#475569" style="background-color: #475569;" aria-label="Modern Structural Ash Color Medium Gray Swatch"></button>
+                                <button type="button" class="swatch-btn" data-value="#F8FAFC" style="background-color: #F8FAFC;" aria-label="Premium Insulated Alabaster Clear White Swatch"></button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Trim Profile &amp; Flash Edge Color</label>
+                            <div id="swatches-trim" class="swatch-row" role="radiogroup" aria-label="Trim Profile Components Siding Frame Color System Options">
+                                <button type="button" class="swatch-btn active" data-value="#1E293B" style="background-color: #1E293B;" aria-label="Dark Charcoal Accent Swatch"></button>
+                                <button type="button" class="swatch-btn" data-value="#F8FAFC" style="background-color: #F8FAFC;" aria-label="Alabaster Outline Swatch"></button>
+                                <button type="button" class="swatch-btn" data-value="#D4AF37" style="background-color: #D4AF37;" aria-label="Classic Ochre Gold Accent Trim Edge Swatch"></button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Integrated 3ft Structural Wainscot Lower Accent Border Panel</label>
+                            <div id="toggle-wainscot" class="toggle-row" role="radiogroup" aria-label="Wainscot Accent Strip Installation Status Options Button Toggle">
+                                <button type="button" class="btn-toggle active" data-value="false">No Wainscot</button>
+                                <button type="button" class="btn-toggle" data-value="true">Add 3ft Wainscot</button>
+                            </div>
+                        </div>
+                        <div id="wainscot-color-container" class="form-group hidden">
+                            <label>Wainscot Accent Cladding Sheet Color</label>
+                            <div id="swatches-wainscot" class="swatch-row" role="radiogroup" aria-label="Lower Level Wainscot Steel Panel Siding Options Color System">
+                                <button type="button" class="swatch-btn active" data-value="#1E293B" style="background-color: #1E293B;" aria-label="Wainscot Black Swatch"></button>
+                                <button type="button" class="swatch-btn" data-value="#7F1D1D" style="background-color: #7F1D1D;" aria-label="Wainscot Red Swatch"></button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="param-overhang">Framed Eave Structural Eave Box Overhang Profile Length</label>
+                            <select id="param-overhang" name="overhang">
+                                <option value="0">0" Flush Box Eave Line</option>
+                                <option value="12" selected>12-Inch Structural Boxed Eave Overhang</option>
+                                <option value="18">18-Inch Structural Boxed Eave Overhang</option>
+                                <option value="24">24-Inch Structural Boxed Eave Overhang</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 3. INTERIOR LINING CONFIGURATION FITMENT SPECIFICATIONS EXTENSION MATRIX -->
+                    <div class="card">
+                        <h2>3. Interior Lining System</h2>
+                        <div class="form-group">
+                            <label>Enclosure Interior Lining Installation Specification Base Layer</label>
+                            <div id="toggle-interior" class="toggle-row" role="radiogroup" aria-label="Internal Siding Liner Wall Sheet Panel Application Setup Trigger Button System">
+                                <button type="button" class="btn-toggle active" data-value="false">Uninsulated Cold Building Shell Only</button>
+                                <button type="button" class="btn-toggle" data-value="true">Full Finished Core Siding Interior Liner Package</button>
+                            </div>
+                        </div>
+                        <div id="interior-color-container" class="form-group hidden">
+                            <label>Interior Metal Liner Wall Cladding Sheet Coating Color Selection</label>
+                            <div id="swatches-interior" class="swatch-row" role="radiogroup" aria-label="Interior Internal Liner Finishing Colors Choice">
+                                <button type="button" class="swatch-btn active" data-value="#F8FAFC" style="background-color: #F8FAFC;" aria-label="Bright Dynamic Reflective White Interior Siding Color Swatch"></button>
+                                <button type="button" class="swatch-btn" data-value="#F1F5F9" style="background-color: #F1F5F9;" aria-label="Soft Gray Liner Shield Swatch"></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. APERTURES INJECTION TOOLBAR MODULE SELECTIONS ACTIONS DRAWER BASE CARD -->
+                    <div class="card">
+                        <h2>4. Framing Openings Assemblies Injection</h2>
+                        <p class="hint" style="font-size: 0.8125rem; color: var(--color-slate-600); margin-bottom: 12px;">Inject component node opening profiles onto the active projection vector grid plane below.</p>
+                        <div class="injector-grid">
+                            <button type="button" class="btn-inject" data-type="overhead"><span class="icon">🛞</span> Overhead Door</button>
+                            <button type="button" class="btn-inject" data-type="bifold"><span class="icon">📂</span> Bifold Door</button>
+                            <button type="button" class="btn-inject" data-type="slider"><span class="icon">🛷</span> Sliding Door</button>
+                            <button type="button" class="btn-inject" data-type="walk_door"><span class="icon">🚪</span> Walk Entry Door</button>
+                            <button type="button" class="btn-inject" data-type="window"><span class="icon">🪟</span> Window Opening</button>
+                        </div>
+                    </div>
+
+                    <!-- 5. DYNAMIC MODIFIER ACTIVE ASSEMBLY NODE EDITING DRAWER PROPERTIES FORM PANEL CARD (Revealed Conditionally via App Engine Logic Loops) -->
+                    <div id="modifier-card" class="card hidden" style="border-color: var(--color-gold); background-color: rgba(212, 175, 55, 0.02);">
+                        <h2>5. Edit Selection Properties <span style="font-size: 0.75rem; background-color: var(--color-gold); color: var(--color-navy); padding: 2px 6px; border-radius: 2px;">Active Node</span></h2>
+                        <div class="form-inline-row">
+                            <div class="form-group">
+                                <label for="mod-width">Scale Node Width (ft)</label>
+                                <input type="number" id="mod-width" min="3" max="40" step="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="mod-height">Scale Node Height (ft)</label>
+                                <input type="number" id="mod-height" min="3" max="20" step="1">
+                            </div>
+                        </div>
+                        <div class="modifier-actions">
+                            <button type="button" id="btn-duplicate" class="btn btn-outline">Duplicate Node</button>
+                            <button type="button" id="btn-delete" class="btn btn-danger">Delete Component</button>
+                        </div>
+                    </div>
+
+                    <!-- 6. SPECIAL MANUAL REQUESTS UNDERWRITING DATA INTENDED EXCEEDS CONTAINER FORM MEMO LAYER -->
+                    <div class="card">
+                        <h2>Special Engineering Notes</h2>
+                        <div class="form-group">
+                            <textarea id="param-special" rows="3" placeholder="Enter special field variables here (e.g., custom wind uplift resistance, timber pile footing specs, lean-to structural additions, custom overhead tracks). All numerical calculator matrices ignore this comment data layer automatically; an expert underwriting coordinator reviews it during manual estimate file packaging workflows."></textarea>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- INTERACTIVE VECTOR BLUEPRINT PROJECTION GRAPHICAL WORKING WORKSPACE DASHBOARD LAYER COLUMN (RIGHT) -->
+                <div class="viewer-column">
+                    
+                    <!-- SVG DISPLAY ENCLOSURE DRAWER FRAMEWORK WORKSPACE DASHBOARD TARGET CARD BLOCK -->
+                    <div class="viewer-card">
+                        <div class="viewer-header">
+                            <div class="viewer-meta">
+                                <h3 id="viewer-title">Front Wall Elevation Projection View</h3>
+                                <p id="viewer-metrics">Enclosure Shell Vector Blueprint Rendering Plane Target Surface Container</p>
+                            </div>
+                            <div id="view-tabs" class="tabs" role="tablist" aria-label="Building Projection Angles Elevation Mapping Switch Selector Tabs">
+                                <button type="button" role="tab" aria-selected="true" class="tab-btn active" data-face="front">Front View</button>
+                                <button type="button" role="tab" aria-selected="false" class="tab-btn" data-face="rear">Rear View</button>
+                                <button type="button" role="tab" aria-selected="false" class="tab-btn" data-face="left">Left Side View</button>
+                                <button type="button" role="tab" aria-selected="false" class="tab-btn" data-face="right">Right Side View</button>
+                            </div>
+                        </div>
+
+                        <!-- 2D VECTOR GRAPHICAL PLATFORM DRAWING ENVELOPE BASE LAYER CANVAS COMPONENT VIEWPORT -->
+                        <div class="viewer-canvas-container">
+                            <svg id="building-svg" class="viewer-svg" viewBox="0 0 800 500" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                                <!-- PIPELINE LAYER STACK MATRIX SCHEMA BLUEPRINTS FOR COPILOT INTERACTION BINDINGS PLACEMENTS -->
+                                <g id="svg-grid-layer" class="grid-layer">
+                                    <!-- Dynamic framework backdrop structural marker tracks elements injected programmatically by viewer engine loops -->
+                                    <line x1="50" y1="50" x2="750" y2="50" class="grid-line-major" />
+                                    <line x1="50" y1="420" x2="750" y2="420" class="grid-line-major" />
+                                </g>
+                                <g id="svg-envelope-layer" class="envelope-layer">
+                                    <!-- Structural Envelope Primitives Layer Placeholder Elements -->
+                                    <polygon id="svg-roof" class="roof-poly" points="50,150 400,50 750,150" />
+                                    <rect id="svg-wall" class="wall-rect" x="50" y="150" width="700" height="270" />
+                                    <rect id="svg-wainscot" class="wainscot-rect hidden" x="50" y="360" width="700" height="60" />
+                                </g>
+                                <g id="svg-openings-layer" class="openings-layer">
+                                    <!-- Dynamic structural aperture instances nodes tracking rect components injected inside pool mapping arrays loops later -->
+                                </g>
+                                <g id="svg-selection-layer" class="selection-layer">
+                                    <!-- Selected active element vector outlines bounds highlighters node tracks indicators paths layer -->
+                                </g>
+                                <g id="svg-dimensions-layer" class="dimensions-layer">
+                                    <!-- Direct Dimension Callouts Vector Strings Text Labels Paths Elements Layer Structure Base -->
+                                    <line x1="50" y1="445" x2="750" y2="445" stroke="#94A3B8" stroke-width="1.5" />
+                                    <text id="svg-dim-width-text" x="400" y="465" class="dim-text">30 ft (Building Frame Width Line Boundary)</text>
+                                    
+                                    <line x1="25" y1="150" x2="25" y2="420" stroke="#94A3B8" stroke-width="1.5" />
+                                    <text id="svg-dim-height-text" x="15" y="285" class="dim-text" transform="rotate(-90 15 285)">14 ft Eave Structural Boundary Line</text>
+                                </g>
+                            </svg>
+                        </div>
+                        
+                        <div class="viewer-footer" aria-hidden="true">
+                            <span class="viewer-footer-status"><span class="dot dot-primary"></span> 4ft Structural Framing Grid Lock Snapping Active</span>
+                            <span class="viewer-footer-status"><span class="dot dot-accent"></span> Active Element Selection Outline Target Highlighted</span>
+                        </div>
+                    </div>
+
+                    <!-- REALTIME DYNAMIC INTERACTIVE CONFIGURATION SUMMARY FINANCIAL COST VALUE ESTIMATE STATEMENTS SCOREBOARD BLOCK CONTAINER -->
+                    <article class="summary" aria-label="Current Custom Specification Estimate Statement Summary Card Ledger Dashboard">
+                        <div class="summary-grid">
+                            <div class="summary-details">
+                                <h4>Current Configuration Baseline Summary</h4>
+                                <ul id="summary-spec-list" class="summary-spec-list">
+                                    <!-- Data instances tracking parameter values items string outputs mapping directly inside target list layout loops nodes -->
+                                    <li><span>Main Shell footprint Size Dimensions Matrix:</span><span>30ft Width &times; 40ft Length &times; 14ft Eave Height</span></li>
+                                    <li><span>Structural Footprint Surface Total Area Profile:</span><span>1,200 Square Feet Ground Footprint Area</span></li>
+                                    <li><span>Roof Metal Panel Siding Finish Sheathing Coating Color:</span><span>Charcoal Slate Gray Metallic Coating Finish</span></li>
+                                    <li><span>Wall Cladding Structural Shell Steel Coating Profile Color:</span><span>Ash Medium Siding Gray Coating Plate Finish</span></li>
+                                    <li><span>Trim Edge Flashing Assembly Component Border Profiles Color:</span><span>Midnight Charcoal Dark Trim Accent Trim Coating</span></li>
+                                    <li><span>Apertures Assembly Structural Openings Count Array Log:</span><span>0 Active Component Assemblies Inserted</span></li>
+                                </ul>
+                            </div>
+                            <div class="summary-pricing">
+                                <span class="price-lbl">Estimated Baseline Price</span>
+                                <strong id="price-badge" class="price-value">$34,250</strong>
+                                <p class="disclaimer">Baseline cost calculations incorporate structural post timber frameworks dimension packages, sheathing components structural cargo logistics payload mapping lines delivery, and full onsite assembly erection framing crew labor indices lines matching standardized builder configurations.</p>
+                            </div>
+                        </div>
+                    </article>
+
+                </div>
+
+            </div>
+        </section>
+
+        <!-- LEAD CAPTURE SYSTEM WORKFLOW INTEGRATION CUSTOMER DATA REGISTRATION PROPOSALS INTAKE SECTION PORTAL -->
+        <section id="contact" class="contact" aria-labelledby="contact-heading">
+            <div class="container contact-container">
+                <div class="contact-sidebar">
+                    <h2 id="contact-heading">Request Formal Engineering Underwriting Proposal File</h2>
+                    <p>Your dimensional inputs metrics, exterior color choices configurations listings arrays trackers, and custom door/window geometric spatial positioning coordinates indexes tracking vectors data lists are compiled securely. A certified engineering drafting lead from our family-run regional headquarters operations team validates tracking variables loops manually against structural load rule logs directly to outline project timeline execution schedules fields.</p>
+                    <ul class="bullets">
+                        <li><span class="check-icon">✓</span> <span>Automated data blueprint synchronization transfer pipelines routing maps straight to drafting terminal machines layout suites logs.</span></li>
+                        <li><span class="check-icon">✓</span> <span>Localized regional ground snow thresholds threshold limits matching analysis calculations, wind displacement payload envelope rating parameters tracking validation check lines.</span></li>
+                        <li><span class="check-icon">✓</span> <span>Direct project routing configuration task distribution files assignment scheduling targets straight onto field construction frame crews dispatch boards rosters logs.</span></li>
+                    </ul>
+                </div>
+
+                <!-- LEAD INTAKE INGESTION CLIENT CAPTURE DATA CONTAINER SUBMISSION FORM APPLICATION COMPONENT SYSTEM -->
+                <form id="lead-form" class="contact-form" autocomplete="on" novalidate>
+                    <div class="form-stack">
+                        <div class="form-group">
+                            <label for="lead-name">Customer Full Name (First &amp; Last Name)</label>
+                            <input type="text" id="lead-name" name="fullname" required placeholder="John Doe" autocomplete="name">
+                            <span id="err-name" class="field-error" role="alert"></span>
+                        </div>
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label for="lead-email">Primary Email Address Endpoint</label>
+                                <input type="email" id="lead-email" name="email" required placeholder="johndoe@example.com" autocomplete="email">
+                                <span id="err-email" class="field-error" role="alert"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="lead-phone">Primary Contact Telephone Number</label>
+                                <input type="tel" id="lead-phone" name="phone" required placeholder="(555) 000-0000" autocomplete="tel">
+                                <span id="err-phone" class="field-error" role="alert"></span>
+                            </div>
+                        </div>
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label for="lead-city">Proposed Building Property Site Construction City</label>
+                                <input type="text" id="lead-city" name="city" required placeholder="Rugby">
+                                <span id="err-city" class="field-error" role="alert"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="lead-state">Building Site Construction State Location Jurisdiction</label>
+                                <input type="text" id="lead-state" name="state" required placeholder="ND">
+                                <span id="err-state" class="field-error" role="alert"></span>
+                            </div>
+                        </div>
+                        <button type="submit" id="btn-submit-lead" class="btn btn-navy btn-full">Request Formal Estimate</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- SYSTEM STANDARD FOOTER PLATFORM BRANDING COMPONENT PANEL BLOCK MODULE -->
+    <footer class="footer" role="contentinfo">
+        <div class="container footer-container">
+            <div class="footer-brand">
+                <span class="logo"><strong>Moravian</strong><span>Builders</span></span>
+                <p>Crafting custom engineered, family-operated clear-span post-frame outbuilding construction solutions and frameworks with dependable multi-generational builder integrity methods tracking structures.</p>
+            </div>
+            <div class="footer-nav">
+                <h4>Platform Navigation Maps</h4>
+                <div class="footer-nav-links">
+                    <a href="#home">Home Portal Dashboard</a>
+                    <a href="#configurator">Interactive Design Estimator App Workspace</a>
+                    <a href="#gallery">Custom Projects Portfolio Photo Gallery</a>
+                    <a href="#contact">Request Underwriting Formal Proposals File</a>
+                </div>
+            </div>
+            <div class="footer-contact">
+                <h4>Regional Operations Central Headquarters Hub</h4>
+                <address>
+                    Moravian Builders Systems Framing Structural Engineering Division LLC<br>
+                    North Dakota Regional Operations Area Hub Complex Systems Center<br>
+                    Rugby, North Dakota Territory Line Post-Frame Offices Zone Storage Matrix<br>
+                    Operational Support Services Communications Endpoint Link: <a href="mailto:engineering@moravianbuilders.com">engineering@moravianbuilders.com</a> &bull; Direct Phone Line Buffer Gateway: (800) 555-7678
+                </address>
+            </div>
+        </div>
+        <div class="container footer-bottom">
+            <p>&copy; 2026 Moravian Builders Structural Outbuilding Frame Group Systems Assembly LLC. All corporate entities rights reserved platform parameters layout tracking definitions structures rules indices.</p>
+            <p style="font-size: 0.75rem; color: var(--color-slate-400); max-width: 600px; text-align: right;">Portal evaluation values display material base estimates metrics only subject to strict structural localized drafting engineering checks code confirmations parameters approval matrix operations logic targets validation tracks fields logs.</p>
+        </div>
+    </footer>
+
+    <!-- MOBILE THUMB ZONE STICKY ACTIONS ACTION STRIP BAR FOOTER DRAWER WIDGET LAYER (Responsive optimization target context for viewports under 600px like iPhone 390px models layout metrics profiles) -->
+    <div id="mobile-sticky-bar" class="mobile-action-bar" aria-hidden="true">
+        <div class="mobile-bar-container">
+            <div class="mobile-bar-price">
+                <span class="lbl">Estimated Price Base Summary Baseline Value Sum:</span>
+                <strong id="mobile-price-badge" class="val">$34,250</strong>
+            </div>
+            <a href="#contact" class="btn btn-gold">Secure Quote</a>
+        </div>
+    </div>
+
+</body>
+</html>
