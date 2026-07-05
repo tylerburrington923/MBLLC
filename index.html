@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Moravian Builders Professional Post-Frame Building Estimator Platform.">
+    <title>Moravian Builders | Estimator</title>
+    
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/configurator.css">
+    <link rel="stylesheet" href="css/viewer.css">
+    <link rel="stylesheet" href="css/responsive.css">
+
+    <script type="module" src="js/app.js" defer></script>
+</head>
+<body>
+
+    <header class="header">
+        <div class="container header-container">
+            <a href="#home" class="logo" aria-label="Moravian Builders Corporate Portal">
+                <strong>Moravian</strong><span>Builders</span>
+            </a>
+            <nav class="nav" role="navigation" aria-label="Main Directory Navigation">
+                <a href="#home" class="nav-link active">Home</a>
+                <a href="#configurator" class="nav-link">Estimator</a>
+                <a href="#gallery" class="nav-link">Gallery</a>
+                <a href="#contact" class="nav-link">Contact</a>
+            </nav>
+            <a href="#configurator" class="button button-gold header-cta">Start Building</a>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <section id="home" class="hero" aria-label="Featured Projects">
+            <div id="hero-slider" class="hero-slider">
+                <div class="hero-slide active" data-bg="images/hero/industrial.jpg"></div>
+                <div class="hero-slide" data-bg="images/hero/suburban.jpg"></div>
+                <div class="hero-slide" data-bg="images/hero/ag.jpg"></div>
+            </div>
+            <div class="hero-content">
+                <h1>Moravian Builders<br><span class="accent">Post Frame Structures</span></h1>
+                <p>Simple. Reliable. Built to Last.</p>
+                <div class="hero-actions">
+                    <a href="#configurator" class="button button-gold">Start Building</a>
+                    <a href="#gallery" class="button button-outline">View Gallery</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="trust-strip" aria-label="Capabilities Baseline">
+            <div class="container trust-container">
+                <div class="trust-item"><span class="icon">📐</span><h3>Custom Designed</h3></div>
+                <div class="trust-item"><span class="icon">🇺🇸</span><h3>Built in America</h3></div>
+                <div class="trust-item"><span class="icon">🛠️</span><h3>Professionally Engineered</h3></div>
+            </div>
+        </section>
+
+        <section id="gallery" class="gallery" aria-labelledby="gallery-heading">
+            <div class="container">
+                <h2 id="gallery-heading">Completed Projects Portfolio</h2>
+                <p>Horizontal scrolling array of verified building deliveries.</p>
+            </div>
+            <div id="gallery-scroller" class="gallery-scroller">
+                <article class="gallery-card">
+                    <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 450'%3E%3Crect width='100%25' height='100%25' fill='%23E3E8EF'/%3E%3C/svg%3E" 
+                         data-src="images/gallery/project1.jpg" alt="Commercial Post-Frame Shop Shell" class="lazy-img">
+                    <h3>Commercial Storage Facility</h3>
+                </article>
+            </div>
+        </section>
+
+        <section id="configurator" class="configurator" aria-label="Building Configurator System">
+            <div class="container configurator-grid">
+                
+                <aside class="controls">
+                    <div class="card">
+                        <h2>1. Building Dimensions</h2>
+                        <div class="form-group">
+                            <label for="param-width">Width (ft)</label>
+                            <select id="param-width" name="width"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="param-length">Length (ft)</label>
+                            <select id="param-length" name="length"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="param-height">Eave Height (ft)</label>
+                            <select id="param-height" name="height"></select>
+                        </div>
+                        <div class="static-row">
+                            <span class="label">Roof Pitch Standard Matrix</span>
+                            <span class="value">4:12 Pitch Fixed Structural Base</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>2. Exterior Finishes</h2>
+                        <div class="form-group">
+                            <label>Roof Sheet Color</label>
+                            <div id="swatches-roof" class="swatch-row" role="radiogroup" aria-label="Roof Structural Finishes"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Wall Sheet Color</label>
+                            <div id="swatches-wall" class="swatch-row" role="radiogroup" aria-label="Wall Structural Finishes"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Trim Profile Color</label>
+                            <div id="swatches-trim" class="swatch-row" role="radiogroup" aria-label="Trim Component Finishes"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Integrated 3ft Wainscot Lower Accent Panel Siding</label>
+                            <div id="toggle-wainscot" class="toggle-row" role="radiogroup">
+                                <button type="button" class="btn-toggle active" data-value="false">No Wainscot</button>
+                                <button type="button" class="btn-toggle" data-value="true">Add Wainscot</button>
+                            </div>
+                        </div>
+                        <div id="wainscot-color-container" class="form-group hidden">
+                            <label>Wainscot Accent Sheet Color</label>
+                            <div id="swatches-wainscot" class="swatch-row" role="radiogroup" aria-label="Wainscot Finishes"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="param-overhang">Framed Eave Box Overhang Profile</label>
+                            <select id="param-overhang" name="overhang">
+                                <option value="0">0" Flush Eave Line</option>
+                                <option value="12" selected>12-Inch Box Overhang</option>
+                                <option value="18">18-Inch Box Overhang</option>
+                                <option value="24">24-Inch Box Overhang</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>3. Interior Insulation &amp; Liner Package</h2>
+                        <div class="form-group">
+                            <div id="toggle-interior" class="toggle-row" role="radiogroup">
+                                <button type="button" class="btn-toggle active" data-value="false">Standard Uninsulated Shell Only</button>
+                                <button type="button" class="btn-toggle" data-value="true">Full Premium Finished Liner Assembly</button>
+                            </div>
+                        </div>
+                        <div id="interior-color-container" class="form-group hidden">
+                            <label>Interior Liner Finish Steel Color</label>
+                            <div id="swatches-interior" class="swatch-row" role="radiogroup" aria-label="Interior Liner Finishes"></div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>4. Structural Opening Assemblies Injection</h2>
+                        <p class="hint">Inject component assemblies onto active projection plane target below.</p>
+                        <div class="injector-grid">
+                            <button type="button" class="btn-inject" data-type="overhead">🛞 Overhead</button>
+                            <button type="button" class="btn-inject" data-type="bifold">📂 Bifold Door</button>
+                            <button type="button" class="btn-inject" data-type="slider">🛷 Sliding Door</button>
+                            <button type="button" class="btn-inject" data-type="walk_door">🚪 Walk Door</button>
+                            <button type="button" class="btn-inject" data-type="window">🪟 Window</button>
+                        </div>
+                    </div>
+
+                    <div id="modifier-card" class="card hidden">
+                        <h2>5. Component Node Geometry Properties</h2>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="mod-width">Scale Width (ft)</label>
+                                <input type="number" id="mod-width" min="3" max="40" step="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="mod-height">Scale Height (ft)</label>
+                                <input type="number" id="mod-height" min="3" max="20" step="1">
+                            </div>
+                        </div>
+                        <div class="modifier-actions">
+                            <button type="button" id="btn-duplicate" class="button button-outline">Duplicate Node</button>
+                            <button type="button" id="btn-delete" class="button button-danger">Delete Component</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>Special Engineering Exceptions</h2>
+                        <div class="form-group">
+                            <label for="param-special" class="sr-only">Special Request Entry Form Box</label>
+                            <textarea id="param-special" placeholder="Enter special localized parameters here (e.g. customized wind payload rating requirements, concrete floor bolting, custom color matches outside default swatches). This text routes directly to a human underwriting specialist. All mathematical calculator pricing layers ignore this block text field entry automatically."></textarea>
+                        </div>
+                    </div>
+                </aside>
+
+                <div class="viewer-column">
+                    <div class="viewer-card">
+                        <div class="viewer-header">
+                            <div class="viewer-meta">
+                                <h3 id="viewer-title">Front Wall Elevation View</h3>
+                                <p id="viewer-metrics">--</p>
+                            </div>
+                            <div id="view-tabs" class="tabs" role="tablist" aria-label="Building Elevations Orientation Angle Map Tabs">
+                                <button type="button" role="tab" aria-selected="true" class="tab-btn active" data-face="front">Front Face</button>
+                                <button type="button" role="tab" aria-selected="false" class="tab-btn" data-face="rear">Rear Face</button>
+                                <button type="button" role="tab" aria-selected="false" class="tab-btn" data-face="left">Left Side</button>
+                                <button type="button" role="tab" aria-selected="false" class="tab-btn" data-face="right">Right Side</button>
+                            </div>
+                        </div>
+
+                        <div class="viewer-canvas-container">
+                            <div class="dim-line dim-top" aria-hidden="true"><div class="line"></div><span id="dim-val-width">-- ft</span></div>
+                            <div class="dim-line dim-left" aria-hidden="true"><div class="line"></div><span id="dim-val-height">-- ft</span></div>
+                            
+                            <svg id="building-svg" class="viewer-svg" viewBox="0 0 800 500" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                                <g id="svg-grid-layer" class="grid-layer"></g>
+                                <g id="svg-envelope-layer" class="envelope-layer">
+                                    <polygon id="svg-roof" class="roof-poly"></polygon>
+                                    <rect id="svg-wall" class="wall-rect" x="0" y="0" width="0" height="0"></rect>
+                                    <rect id="svg-wainscot" class="wainscot-rect hidden" x="0" y="0" width="0" height="0"></rect>
+                                </g>
+                                <g id="svg-openings-layer" class="openings-layer"></g>
+                                <g id="svg-selection-layer" class="selection-layer"></g>
+                                <g id="svg-dimensions-layer" class="dimensions-layer"></g>
+                            </svg>
+                        </div>
+                        
+                        <div class="viewer-footer">
+                            <span><span class="dot dot-primary"></span> 4ft Structural Grid Lock Engaged</span>
+                            <span><span class="dot dot-accent"></span> Active Element Outline Highlighted</span>
+                        </div>
+                    </div>
+
+                    <article class="summary" aria-label="Current Configuration Assessment Statement">
+                        <div class="summary-grid">
+                            <div class="summary-details">
+                                <h4>Building Configuration Package</h4>
+                                <ul id="summary-spec-list"></ul>
+                            </div>
+                            <div class="summary-pricing">
+                                <span class="price-lbl">Estimated Project Price</span>
+                                <strong id="price-badge" class="price-value">$00,000</strong>
+                                <p class="disclaimer">Baseline calculation includes all primary structural dimensional packages, materials, hardware loads, delivery logistics mapping, and core field builder crew erection assembly labor profiles.</p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="contact" class="contact" aria-labelledby="contact-heading">
+            <div class="container contact-container">
+                <div class="contact-sidebar">
+                    <h2 id="contact-heading">Secure Formal Engineering Underwriting Proposal</h2>
+                    <p>Your dimension metrics, exterior finishes selections, and door/window spatial placement tracking lists are packaged instantly upon dispatch tracking validation targets.</p>
+                    <ul class="bullets">
+                        <li>✓ Automated data synchronization to structural drafting systems</li>
+                        <li>✓ Regional wind exposure, ground layout, &amp; snow load envelope assessment</li>
+                        <li>✓ Direct routing configuration allocation to local building framing crews</li>
+                    </ul>
+                </div>
+
+                <form id="lead-form" class="form" autocomplete="on" novalidate>
+                    <div class="form-stack">
+                        <div class="form-group">
+                            <label for="lead-name">Full Name</label>
+                            <input type="text" id="lead-name" name="fullname" required placeholder="John Doe" autocomplete="name">
+                            <span class="field-error" id="err-name"></span>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="lead-email">Email Address</label>
+                                <input type="email" id="lead-email" name="email" required placeholder="johndoe@example.com" autocomplete="email">
+                                <span class="field-error" id="err-email"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="lead-phone">Primary Telephone Number</label>
+                                <input type="tel" id="lead-phone" name="phone" required placeholder="(555) 000-0000" autocomplete="tel">
+                                <span class="field-error" id="err-phone"></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="lead-city">Construction Property Location City</label>
+                                <input type="text" id="lead-city" name="city" required placeholder="Rugby">
+                                <span class="field-error" id="err-city"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="lead-state">State Jurisdiction</label>
+                                <input type="text" id="lead-state" name="state" required placeholder="ND">
+                                <span class="field-error" id="err-state"></span>
+                            </div>
+                        </div>
+                        <button type="submit" class="button button-gold button-full">Transmit System Configuration &amp; Request Estimates</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer" role="contentinfo">
+        <div class="container footer-container">
+            <div class="footer-brand">
+                <span class="logo"><strong>Moravian</strong> Builders</span>
+                <p>Engineering premium clear-span post-frame buildings across national logistics grids.</p>
+            </div>
+            <div class="footer-nav">
+                <h4>System Maps</h4>
+                <a href="#home">Home</a>
+                <a href="#configurator">Estimator</a>
+                <a href="#gallery">Gallery</a>
+                <a href="#contact">Proposal Intake</a>
+            </div>
+            <div class="footer-contact">
+                <h4>Corporate Operations Hub</h4>
+                <address>
+                    Moravian Builders Systems LLC<br>
+                    Rugby, North Dakota Area Hub Region Offices<br>
+                    engineering@moravianbuilders.com &bull; (800) 555-7678
+                </address>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Moravian Builders Outbuilding Group. All rights reserved. Estimates generated through this online portal remain material baselines subject to structural verification protocols.</p>
+        </div>
+    </footer>
+
+    <div id="mobile-sticky-bar" class="mobile-action-bar" aria-hidden="true">
+        <div class="mobile-bar-container">
+            <div class="mobile-bar-price">
+                <span class="lbl">Price:</span>
+                <strong id="mobile-price-badge" class="val">$00,000</strong>
+            </div>
+            <a href="#contact" class="button button-gold">Secure Quote</a>
+        </div>
+    </div>
+
+</body>
+</html>
