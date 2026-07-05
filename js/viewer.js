@@ -2,10 +2,18 @@
  * @file viewer.js
  * @description SVG Rendering Engine & 2D Canvas Manager.
  * Handles all 2D visualization, canvas rendering, and opening manipulation.
+ * PHASE 3-5: Wall unification + projection engine + drag-ready rendering
  */
 
 import { state } from './state.js';
 import { constants } from './constants.js';
+import { pricing } from './pricing.js';
+
+/**
+ * Grid snap constant (normalized)
+ * 0.04 ≈ 4ft on standard 40ft width
+ */
+const GRID_STEP = 0.04;
 
 /**
  * Viewer module
@@ -13,98 +21,175 @@ import { constants } from './constants.js';
  */
 const viewer = {
     svg: null,
-    canvas: null,
-    scale: 1.0,
-    panX: 0,
-    panY: 0,
-    isDragging: false,
-    dragStart: { x: 0, y: 0 },
+    dragState: null,
 
     /**
      * Initialize viewer
      */
     init() {
-        this.canvas = document.getElementById('viewer-canvas');
-        this.initSVG();
-        this.initInteractions();
-        this.initTabSwitching();
-        console.log('Viewer initialized');
-    },
-
-    /**
-     * Initialize SVG canvas
-     */
-    initSVG() {
-        if (this.canvas) {
-            this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            this.svg.setAttribute('class', 'viewer-svg');
-            this.svg.setAttribute('viewBox', `0 0 ${constants.svg.viewBoxWidth} ${constants.svg.viewBoxHeight}`);
-            this.canvas.appendChild(this.svg);
+        this.svg = document.getElementById('building-svg');
+        
+        if (this.svg) {
+            this.initDragSystem();
+            this.renderPipeline();
+            console.log('✓ Viewer initialized with drag system');
         }
     },
 
     /**
-     * Initialize user interactions (click, drag, zoom)
+     * Initialize pointer-based drag system
+     * PHASE 5-6: Complete drag & drop foundation
      */
-    initInteractions() {
-        if (this.canvas) {
-            this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
-            this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-            this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-            this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
-            this.canvas.addEventListener('wheel', (e) => this.handleZoom(e));
-            this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
-            this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e));
-            this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
+    initDragSystem() {
+        this.svg.addEventListener('pointerdown', (e) => this.onPointerDown(e), false);
+        window.addEventListener('pointermove', (e) => this.onPointerMove(e), false);
+        window.addEventListener('pointerup', (e) => this.onPointerUp(e), false);
+        this.svg.addEventListener('pointerleave', (e) => this.onPointerUp(e), false);
+    },
+
+    /**
+     * Pointer down - start drag
+     * PHASE 6: Detect opening nodes and begin drag state
+     */
+    onPointerDown(e) {
+        const target = e.target;
+        
+        // Only handle opening-node elements
+        if (!target.classList.contains('opening-node')) return;
+
+        e.preventDefault();
+        
+        const openingId = target.getAttribute('data-opening-id');
+        const opening = state.getOpening(openingId);
+        
+        if (!opening) return;
+
+        // Select opening
+        state.selectOpening(openingId);
+
+        // Get SVG bounds for coordinate conversion
+        const svgRect = this.svg.getBoundingClientRect();
+
+        // Store drag state
+        this.dragState = {
+            openingId,
+            svgRect,
+            startX: e.clientX,
+            startY: e.clientY,
+            startOpX: opening.x,
+            startOpY: opening.y,
+            isDragging: false
+        };
+
+        this.svg.style.cursor = 'grabbing';
+    },
+
+    /**
+     * Pointer move - drag object
+     * PHASE 6: Convert pointer movement to normalized coordinates with snapping
+     */
+    onPointerMove(e) {
+        if (!this.dragState) return;
+
+        e.preventDefault();
+
+        const opening = state.getOpening(this.dragState.openingId);
+        if (!opening) return;
+
+        // Calculate movement in SVG coordinate space
+        const { svgRect, startX, startY, startOpX, startOpY } = this.dragState;
+        const { width, height } = svgRect;
+
+        // Convert pixel movement to normalized space
+        // Use projection to get wall dimensions
+        const activeWall = state.getActiveWall();
+        const projection = this.getWallProjection(activeWall, state.building);
+        const wallScale = 10; // From renderOpenings scale
+
+        const wallPixelWidth = projection.w * wallScale;
+        const wallPixelHeight = projection.h * wallScale;
+
+        const deltaX = (e.clientX - startX) / wallPixelWidth;
+        const deltaY = (e.clientY - startY) / wallPixelHeight;
+
+        // Calculate new position
+        let newX = startOpX + deltaX;
+        let newY = startOpY + deltaY;
+
+        // Apply grid snap
+        newX = this.snapToGrid(newX, GRID_STEP);
+        newY = this.snapToGrid(newY, GRID_STEP);
+
+        // Clamp to bounds (prevent dragging outside wall)
+        const maxX = 1 - opening.width;
+        const maxY = 1 - opening.height;
+        newX = Math.max(0, Math.min(maxX, newX));
+        newY = Math.max(0, Math.min(maxY, newY));
+
+        // Update state WITHOUT dispatch (preview mode)
+        opening.x = newX;
+        opening.y = newY;
+
+        this.dragState.isDragging = true;
+
+        // Render preview
+        this.renderPipeline();
+    },
+
+    /**
+     * Pointer up - end drag
+     * PHASE 6: Finalize position and save to storage
+     */
+    onPointerUp(e) {
+        if (!this.dragState) return;
+
+        e.preventDefault();
+
+        if (this.dragState.isDragging) {
+            // Dispatch change event to trigger storage
+            state.dispatchChange('openings', 'move', null);
+            state.saveToStorage();
         }
+
+        this.dragState = null;
+        this.svg.style.cursor = '';
+        this.renderPipeline();
     },
 
     /**
-     * Initialize tab switching for different views
+     * Snap value to grid
+     * PHASE 6: Global grid snapping
+     * @param {number} value - Normalized value (0-1)
+     * @param {number} step - Grid step
+     * @returns {number} Snapped value
      */
-    initTabSwitching() {
-        const tabs = document.querySelectorAll('.tab-btn');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                e.preventDefault();
-                const face = tab.dataset.face;
-                if (face) {
-                    state.setCurrentFace(face);
-                    this.switchViewTab(tab);
-                    this.renderPipeline();
-                }
-            });
-        });
-    },
-
-    /**
-     * Switch active tab
-     * @param {HTMLElement} tab - Tab button element
-     */
-    switchViewTab(tab) {
-        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
+    snapToGrid(value, step) {
+        return Math.round(value / step) * step;
     },
 
     /**
      * Get wall projection dimensions based on active wall
-     * CRITICAL FIX: Each wall gets proper width/height assignment
+     * PHASE 3-4: Unified wall projection engine
      * @param {string} activeWall - Current wall being viewed
      * @param {object} building - Building state object
      * @returns {object} Projection with {w, h, mirror}
      */
     getWallProjection(activeWall, building) {
+        if (!building.dimensions) {
+            return { w: 40, h: 14, mirror: false };
+        }
+
         const { width, length, height } = building.dimensions;
 
         switch (activeWall) {
             case "front":
+                return { w: width, h: height, mirror: false };
             case "rear":
-                return { w: width, h: height, mirror: activeWall === "rear" };
-
+                return { w: width, h: height, mirror: true };
             case "left":
+                return { w: length, h: height, mirror: false };
             case "right":
-                return { w: length, h: height, mirror: activeWall === "right" };
-
+                return { w: length, h: height, mirror: true };
             default:
                 return { w: width, h: height, mirror: false };
         }
@@ -122,192 +207,162 @@ const viewer = {
             this.svg.removeChild(this.svg.firstChild);
         }
 
-        // Get current wall projection (CRITICAL FIX)
-        const projection = this.getWallProjection(state.currentFace, state.building);
+        // PHASE 3: Use unified activeWall instead of currentFace
+        const activeWall = state.getActiveWall();
+        const projection = this.getWallProjection(activeWall, state.building);
 
-        // Render building envelope
-        this.renderBuilding();
-
-        // Render openings on current face with projection awareness
-        this.renderOpenings(projection);
-
-        // Render selection UI if opening selected
-        if (state.selectedOpening) {
-            this.renderSelectionUI();
-        }
-
-        // Render grid (optional, can be toggled)
+        // Render layers
         this.renderGrid();
+        this.renderBuilding(projection);
+        this.renderOpenings(projection, activeWall);
+        this.renderSelection(projection, activeWall);
     },
 
     /**
      * Render building envelope (roof, walls, wainscot)
      */
-    renderBuilding() {
-        const { width, length, height, roofPitch, wainscotEnabled } = state.building;
-        const cfg = constants.svg;
-        const scale = cfg.gridSize;
+    renderBuilding(projection) {
+        const { dimensions, roofColor, wallColor, wainscotEnabled, wainscotColor } = state.building;
+        
+        if (!dimensions) return;
 
-        // Calculate positions
-        const x = cfg.padding;
-        const y = cfg.padding;
-        const w = width * scale;
+        const { height } = dimensions;
+        const padding = 50;
+        const scale = 10;
+        const w = projection.w * scale;
         const h = height * scale;
 
-        // Roof polygon
-        const roofHeight = this.calculateRoofHeight(roofPitch, width);
-        const roofPoly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        roofPoly.setAttribute('class', 'roof-poly');
-        roofPoly.setAttribute('points', `
-            ${x},${y + h}
-            ${x + w / 2},${y + h - roofHeight * scale}
-            ${x + w},${y + h}
-        `);
-        roofPoly.setAttribute('fill', state.building.roofColor);
-        this.svg.appendChild(roofPoly);
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.setAttribute('class', 'envelope-layer');
 
-        // Walls
+        // Wall rectangle
         const wallRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         wallRect.setAttribute('class', 'wall-rect');
-        wallRect.setAttribute('x', x);
-        wallRect.setAttribute('y', y + h);
+        wallRect.setAttribute('x', padding);
+        wallRect.setAttribute('y', padding);
         wallRect.setAttribute('width', w);
-        wallRect.setAttribute('height', h * 0.5);
-        wallRect.setAttribute('fill', state.building.wallColor);
-        this.svg.appendChild(wallRect);
+        wallRect.setAttribute('height', h);
+        wallRect.setAttribute('fill', wallColor || '#64748B');
+        wallRect.setAttribute('stroke', '#000');
+        wallRect.setAttribute('stroke-width', '2');
+        group.appendChild(wallRect);
 
         // Wainscot (if enabled)
         if (wainscotEnabled) {
             const wainscotRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             wainscotRect.setAttribute('class', 'wainscot-rect');
-            wainscotRect.setAttribute('x', x);
-            wainscotRect.setAttribute('y', y + h + h * 0.4);
+            wainscotRect.setAttribute('x', padding);
+            wainscotRect.setAttribute('y', padding + h - h * 0.3);
             wainscotRect.setAttribute('width', w);
-            wainscotRect.setAttribute('height', h * 0.1);
-            wainscotRect.setAttribute('fill', state.building.wainscotColor);
-            this.svg.appendChild(wainscotRect);
+            wainscotRect.setAttribute('height', h * 0.3);
+            wainscotRect.setAttribute('fill', wainscotColor || '#475569');
+            group.appendChild(wainscotRect);
         }
-    },
 
-    /**
-     * Calculate roof peak height from pitch
-     * @param {string} pitch - Roof pitch (e.g., "4:12")
-     * @param {number} width - Building width
-     * @returns {number} Height in feet
-     */
-    calculateRoofHeight(pitch, width) {
-        const [rise, run] = pitch.split(':').map(Number);
-        return (width / 2) * (rise / run);
+        this.svg.appendChild(group);
     },
 
     /**
      * Render openings (doors and windows) on current face
-     * CRITICAL FIX: Now projection-aware and normalized
+     * PHASE 4-5: Safe filtering + normalized coordinate conversion
      * @param {object} projection - Wall projection data
+     * @param {string} activeWall - Active wall name
      */
-    renderOpenings(projection) {
-        const openings = state.getOpeningsByFace(state.currentFace);
-        const cfg = constants.svg;
-        const scale = cfg.gridSize;
+    renderOpenings(projection, activeWall) {
+        // PHASE 4: Safe filtering with null check
+        const openingsOnFace = (state.building.openings || []).filter(o => o.face === activeWall);
+
+        const padding = 50;
+        const scale = 10;
+        const wallW = projection.w * scale;
+        const wallH = projection.h * scale;
 
         const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         group.setAttribute('class', 'openings-layer');
+        group.setAttribute('id', 'svg-openings-layer');
 
-        openings.forEach(opening => {
-            // CRITICAL FIX: Convert normalized coordinates to SVG space
-            // opening.x and opening.y are 0-1 normalized values
-            const x = cfg.padding + (opening.x * projection.w * scale);
-            const y = cfg.padding + (opening.y * projection.h * scale);
-            const w = opening.width * scale;
-            const h = opening.height * scale;
+        openingsOnFace.forEach(opening => {
+            // PHASE 5: Convert normalized (0-1) to SVG coordinates
+            const svgX = padding + (opening.x * wallW);
+            const svgY = padding + (opening.y * wallH);
+            const svgW = opening.width * wallW;
+            const svgH = opening.height * wallH;
 
             // Opening rectangle
             const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             rect.setAttribute('class', 'opening-node');
-            rect.setAttribute('x', x);
-            rect.setAttribute('y', y);
-            rect.setAttribute('width', w);
-            rect.setAttribute('height', h);
-            rect.setAttribute('fill', cfg.colors.opening);
-            rect.setAttribute('stroke', cfg.colors.openingStroke);
-            rect.setAttribute('stroke-width', cfg.strokeWidths.default);
             rect.setAttribute('data-opening-id', opening.id);
+            rect.setAttribute('x', svgX);
+            rect.setAttribute('y', svgY);
+            rect.setAttribute('width', svgW);
+            rect.setAttribute('height', svgH);
+            rect.setAttribute('fill', '#E2E8F0');
+            rect.setAttribute('stroke', '#333');
+            rect.setAttribute('stroke-width', '1');
 
-            if (state.selectedOpening === opening.id) {
-                rect.classList.add('selected');
+            if (state.building.selectedOpeningId === opening.id) {
+                rect.setAttribute('class', 'opening-node selected');
+                rect.setAttribute('stroke', '#D4AF37');
+                rect.setAttribute('stroke-width', '3');
             }
 
-            // Label
-            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            text.setAttribute('class', 'opening-label');
-            text.setAttribute('x', x + w / 2);
-            text.setAttribute('y', y + h / 2);
-            text.setAttribute('pointer-events', 'none');
-            text.textContent = opening.type.replace('_', ' ').toUpperCase();
-
-            rect.addEventListener('click', (e) => {
-                e.stopPropagation();
-                state.selectOpening(opening.id);
-                this.renderPipeline();
-            });
-
-            rect.addEventListener('mousedown', (e) => {
-                if (e.button === 0) {
-                    e.stopPropagation();
-                    this.startDraggingOpening(e, opening.id);
-                }
-            });
-
             group.appendChild(rect);
-            group.appendChild(text);
         });
 
         this.svg.appendChild(group);
     },
 
     /**
-     * Render selection UI (handles, resize controls)
+     * Render selection highlights
+     * @param {object} projection - Wall projection data
+     * @param {string} activeWall - Active wall name
      */
-    renderSelectionUI() {
-        const opening = state.getOpening(state.selectedOpening);
-        if (!opening) return;
+    renderSelection(projection, activeWall) {
+        if (!state.building.selectedOpeningId) return;
 
-        const cfg = constants.svg;
-        const scale = cfg.gridSize;
-        const projection = this.getWallProjection(state.currentFace, state.building);
+        const opening = state.getOpening(state.building.selectedOpeningId);
+        if (!opening || opening.face !== activeWall) return;
+
+        const padding = 50;
+        const scale = 10;
+        const wallW = projection.w * scale;
+        const wallH = projection.h * scale;
         
-        const x = cfg.padding + (opening.x * projection.w * scale);
-        const y = cfg.padding + (opening.y * projection.h * scale);
-        const w = opening.width * scale;
-        const h = opening.height * scale;
-        const handleSize = 8;
+        const svgX = padding + (opening.x * wallW);
+        const svgY = padding + (opening.y * wallH);
+        const svgW = opening.width * wallW;
+        const svgH = opening.height * wallH;
 
         const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         group.setAttribute('class', 'selection-layer');
 
         // Selection outline
         const outline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        outline.setAttribute('class', 'selection-box');
-        outline.setAttribute('x', x - 4);
-        outline.setAttribute('y', y - 4);
-        outline.setAttribute('width', w + 8);
-        outline.setAttribute('height', h + 8);
+        outline.setAttribute('x', svgX - 5);
+        outline.setAttribute('y', svgY - 5);
+        outline.setAttribute('width', svgW + 10);
+        outline.setAttribute('height', svgH + 10);
+        outline.setAttribute('fill', 'none');
+        outline.setAttribute('stroke', '#D4AF37');
+        outline.setAttribute('stroke-width', '2');
+        outline.setAttribute('stroke-dasharray', '5,5');
         group.appendChild(outline);
 
         // Resize handles (corners)
         const handles = [
-            { x: x - handleSize / 2, y: y - handleSize / 2, cursor: 'nwse-resize' },
-            { x: x + w - handleSize / 2, y: y - handleSize / 2, cursor: 'nesw-resize' },
-            { x: x - handleSize / 2, y: y + h - handleSize / 2, cursor: 'nesw-resize' },
-            { x: x + w - handleSize / 2, y: y + h - handleSize / 2, cursor: 'nwse-resize' }
+            { x: svgX, y: svgY, cursor: 'nwse-resize' },
+            { x: svgX + svgW, y: svgY, cursor: 'nesw-resize' },
+            { x: svgX, y: svgY + svgH, cursor: 'nesw-resize' },
+            { x: svgX + svgW, y: svgY + svgH, cursor: 'nwse-resize' }
         ];
 
-        handles.forEach((handle, idx) => {
+        handles.forEach(handle => {
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('class', 'selection-handle');
-            circle.setAttribute('cx', handle.x + handleSize / 2);
-            circle.setAttribute('cy', handle.y + handleSize / 2);
-            circle.setAttribute('r', handleSize / 2);
+            circle.setAttribute('class', 'resize-handle');
+            circle.setAttribute('cx', handle.x);
+            circle.setAttribute('cy', handle.y);
+            circle.setAttribute('r', '5');
+            circle.setAttribute('fill', '#D4AF37');
             circle.setAttribute('style', `cursor: ${handle.cursor}`);
             group.appendChild(circle);
         });
@@ -319,134 +374,36 @@ const viewer = {
      * Render grid lines
      */
     renderGrid() {
-        const cfg = constants.svg;
-        const grid = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        grid.setAttribute('class', 'grid-layer');
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.setAttribute('class', 'grid-layer');
 
-        const spacing = cfg.gridSize;
-        for (let x = 0; x <= cfg.viewBoxWidth; x += spacing) {
+        const spacing = 40;
+        const maxX = 800;
+        const maxY = 500;
+
+        // Vertical lines
+        for (let x = 0; x <= maxX; x += spacing) {
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('class', x % (spacing * 4) === 0 ? 'grid-line-major' : 'grid-line');
+            line.setAttribute('class', x % 160 === 0 ? 'grid-line-major' : 'grid-line');
             line.setAttribute('x1', x);
             line.setAttribute('y1', 0);
             line.setAttribute('x2', x);
-            line.setAttribute('y2', cfg.viewBoxHeight);
-            grid.appendChild(line);
+            line.setAttribute('y2', maxY);
+            group.appendChild(line);
         }
 
-        for (let y = 0; y <= cfg.viewBoxHeight; y += spacing) {
+        // Horizontal lines
+        for (let y = 0; y <= maxY; y += spacing) {
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('class', y % (spacing * 4) === 0 ? 'grid-line-major' : 'grid-line');
+            line.setAttribute('class', y % 160 === 0 ? 'grid-line-major' : 'grid-line');
             line.setAttribute('x1', 0);
             line.setAttribute('y1', y);
-            line.setAttribute('x2', cfg.viewBoxWidth);
+            line.setAttribute('x2', maxX);
             line.setAttribute('y2', y);
-            grid.appendChild(line);
+            group.appendChild(line);
         }
 
-        this.svg.appendChild(grid);
-    },
-
-    /**
-     * Handle canvas click (deselect opening if clicking empty area)
-     */
-    handleCanvasClick(e) {
-        if (e.target === this.svg || e.target === this.canvas) {
-            state.selectOpening(null);
-            this.renderPipeline();
-        }
-    },
-
-    /**
-     * Start dragging opening
-     */
-    startDraggingOpening(e, openingId) {
-        this.isDragging = true;
-        this.dragStart = { x: e.clientX, y: e.clientY };
-    },
-
-    /**
-     * Handle mouse down
-     */
-    handleMouseDown(e) {
-        if (e.button === 0) {
-            this.isDragging = true;
-            this.dragStart = { x: e.clientX, y: e.clientY };
-        }
-    },
-
-    /**
-     * Handle mouse move (dragging)
-     */
-    handleMouseMove(e) {
-        if (this.isDragging && state.selectedOpening) {
-            const dx = (e.clientX - this.dragStart.x) / constants.svg.gridSize;
-            const dy = (e.clientY - this.dragStart.y) / constants.svg.gridSize;
-
-            const opening = state.getOpening(state.selectedOpening);
-            if (opening) {
-                state.updateOpening(state.selectedOpening, {
-                    x: Math.max(0, opening.x + dx),
-                    y: Math.max(0, opening.y + dy)
-                });
-                this.dragStart = { x: e.clientX, y: e.clientY };
-                this.renderPipeline();
-            }
-        }
-    },
-
-    /**
-     * Handle mouse up
-     */
-    handleMouseUp(e) {
-        this.isDragging = false;
-    },
-
-    /**
-     * Handle zoom with mouse wheel
-     */
-    handleZoom(e) {
-        e.preventDefault();
-        const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-        this.scale = Math.max(constants.svg.minScale, Math.min(constants.svg.maxScale, this.scale * zoomFactor));
-        this.svg.style.transform = `scale(${this.scale})`;
-    },
-
-    /**
-     * Handle touch start
-     */
-    handleTouchStart(e) {
-        if (e.touches.length === 1) {
-            this.dragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            this.isDragging = true;
-        }
-    },
-
-    /**
-     * Handle touch move
-     */
-    handleTouchMove(e) {
-        if (this.isDragging && e.touches.length === 1 && state.selectedOpening) {
-            const dx = (e.touches[0].clientX - this.dragStart.x) / constants.svg.gridSize;
-            const dy = (e.touches[0].clientY - this.dragStart.y) / constants.svg.gridSize;
-
-            const opening = state.getOpening(state.selectedOpening);
-            if (opening) {
-                state.updateOpening(state.selectedOpening, {
-                    x: Math.max(0, opening.x + dx),
-                    y: Math.max(0, opening.y + dy)
-                });
-                this.dragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                this.renderPipeline();
-            }
-        }
-    },
-
-    /**
-     * Handle touch end
-     */
-    handleTouchEnd(e) {
-        this.isDragging = false;
+        this.svg.appendChild(group);
     }
 };
 
