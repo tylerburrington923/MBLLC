@@ -2,7 +2,7 @@
  * @file controls.js
  * @description Input Handlers & Configuration Controllers.
  * Manages all user interactions with configurator controls and dimension inputs.
- * PATCH 3: Fixed opening injection - uses normalized coordinates system
+ * PHASE 1-2: Wall unification + opening injection with unified schema
  */
 
 import { state } from './state.js';
@@ -51,7 +51,6 @@ const controls = {
             }
         });
 
-        // Set initial values
         this.syncDimensionsToUI();
     },
 
@@ -59,13 +58,13 @@ const controls = {
      * Sync dimension values from state to UI
      */
     syncDimensionsToUI() {
-        const { width, length, height } = state.building.dimensions || state.getDefaults().dimensions;
+        const dims = state.building.dimensions || state.getDefaults().dimensions;
         const overhang = state.building.overhang;
 
         const inputs = {
-            'param-width': width,
-            'param-length': length,
-            'param-height': height,
+            'param-width': dims.width,
+            'param-length': dims.length,
+            'param-height': dims.height,
             'param-overhang': overhang
         };
 
@@ -77,7 +76,6 @@ const controls = {
 
     /**
      * Handle dimension input changes
-     * CRITICAL: Updates nested dimensions object
      * @param {string} dimension - Dimension name (width, length, height, overhang)
      * @param {*} value - New value
      */
@@ -87,7 +85,6 @@ const controls = {
         if (isNaN(numValue)) return;
 
         if (['width', 'length', 'height'].includes(dimension)) {
-            // Update nested dimensions object
             const currentDims = state.building.dimensions || {};
             state.setBuilding('dimensions', {
                 ...currentDims,
@@ -240,7 +237,7 @@ const controls = {
 
     /**
      * Initialize opening injection buttons (add doors/windows)
-     * CRITICAL FIX: Now properly binds to btn-inject buttons in HTML
+     * PHASE 2: Bind to existing btn-inject buttons in HTML
      */
     initOpeningInjectors() {
         const injectorButtons = document.querySelectorAll('.btn-inject');
@@ -257,20 +254,21 @@ const controls = {
 
     /**
      * Inject new opening on current wall
-     * CRITICAL FIX: Uses normalized 0-1 coordinate system
+     * PHASE 2: Unified schema with activeWall
      * @param {string} openingType - Type of opening ('overhead', 'bifold', 'slider', 'walk_door', 'window')
      */
     injectNewOpening(openingType) {
-        // CRITICAL: Opening created with normalized coordinates
+        const activeWall = state.getActiveWall();
+
         const newOpening = {
             type: openingType,
-            face: state.currentFace,
+            face: activeWall,
             
             // Normalized coordinates (0-1 scale)
-            x: 0.35,      // 35% from left edge
-            y: 0.25,      // 25% from top edge
-            width: 0.20,  // 20% of wall width
-            height: 0.30  // 30% of wall height
+            x: 0.35,
+            y: 0.25,
+            width: openingType === 'window' ? 0.12 : 0.20,
+            height: openingType === 'walk_door' ? 0.35 : 0.25
         };
 
         const openingId = state.addOpening(newOpening);
@@ -279,44 +277,50 @@ const controls = {
         pricing.calculate();
         viewer.renderPipeline();
         
-        console.log(`✓ Added ${openingType} to ${state.currentFace} face at normalized coords (${newOpening.x}, ${newOpening.y})`);
+        console.log(`✓ Injected ${openingType} to ${activeWall} at (${newOpening.x}, ${newOpening.y})`);
     },
 
     /**
      * Initialize wall/face tab switching
-     * CRITICAL: Connects tab buttons to wall projection engine
+     * PHASE 1: Unified wall system using state.activeWall
      */
     initWallSwitching() {
         const tabButtons = document.querySelectorAll('.tab-btn');
+        
         tabButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 const face = btn.dataset.face;
+                
                 if (face) {
-                    // Update active tab UI
+                    // Update UI
                     tabButtons.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     
-                    // Update state and trigger render
-                    state.setCurrentFace(face);
-                    viewer.renderPipeline();
+                    // Update state (deselect opening when switching walls)
+                    state.setActiveWall(face);
                     
-                    // Update viewer title
+                    // Update title
                     const titleMap = {
                         'front': 'Front Wall Elevation View',
                         'rear': 'Rear Wall Elevation View',
                         'left': 'Left Side Elevation View',
                         'right': 'Right Side Elevation View'
                     };
+                    
                     const titleEl = document.getElementById('viewer-title');
-                    if (titleEl) titleEl.textContent = titleMap[face] || 'Elevation View';
+                    if (titleEl) titleEl.textContent = titleMap[face];
+                    
+                    // Render
+                    viewer.renderPipeline();
                 }
             });
         });
 
-        // Set initial active tab
-        const frontTab = document.querySelector('[data-face="front"]');
-        if (frontTab) frontTab.classList.add('active');
+        // Set initial active tab to match state
+        const activeWall = state.getActiveWall();
+        const activeTab = document.querySelector(`[data-face="${activeWall}"]`);
+        if (activeTab) activeTab.classList.add('active');
     },
 
     /**
@@ -324,16 +328,19 @@ const controls = {
      */
     initStateListeners() {
         document.addEventListener('app:state-change', (e) => {
-            const { category, path } = e.detail;
+            const { category, action } = e.detail;
 
             if (category === 'building') {
                 this.syncDimensionsToUI();
             } else if (category === 'ui') {
-                if (path === 'selectedOpening') {
+                if (action === 'selectedOpening') {
                     viewer.renderPipeline();
-                } else if (path === 'currentFace') {
+                } else if (action === 'activeWall') {
                     viewer.renderPipeline();
                 }
+            } else if (category === 'openings') {
+                // Re-render on any opening change
+                viewer.renderPipeline();
             }
         });
     },
