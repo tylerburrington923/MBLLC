@@ -2,6 +2,7 @@
  * @file controls.js
  * @description Input Handlers & Configuration Controllers.
  * Manages all user interactions with configurator controls and dimension inputs.
+ * PATCH 3: Fixed opening injection - uses normalized coordinates system
  */
 
 import { state } from './state.js';
@@ -22,53 +23,82 @@ const controls = {
         this.initColorControls();
         this.initFeatureToggles();
         this.initOpeningInjectors();
+        this.initWallSwitching();
         this.initStateListeners();
-        console.log('Controls initialized');
+        console.log('✓ Controls initialized');
     },
 
     /**
      * Initialize dimension input controls (width, length, height, etc.)
      */
     initDimensionControls() {
-        const dimensions = ['width', 'length', 'height', 'overhang', 'roofPitch'];
-        
-        dimensions.forEach(dim => {
-            const input = document.getElementById(`building-${dim}`);
+        const dimensionMap = {
+            'param-width': 'width',
+            'param-length': 'length',
+            'param-height': 'height',
+            'param-overhang': 'overhang'
+        };
+
+        Object.entries(dimensionMap).forEach(([elemId, dimKey]) => {
+            const input = document.getElementById(elemId);
             if (input) {
                 input.addEventListener('change', (e) => {
-                    this.handleDimensionChange(dim, e.target.value);
+                    this.handleDimensionChange(dimKey, e.target.value);
                 });
                 input.addEventListener('input', (e) => {
-                    this.handleDimensionChange(dim, e.target.value);
+                    this.handleDimensionChange(dimKey, e.target.value);
                 });
             }
+        });
+
+        // Set initial values
+        this.syncDimensionsToUI();
+    },
+
+    /**
+     * Sync dimension values from state to UI
+     */
+    syncDimensionsToUI() {
+        const { width, length, height } = state.building.dimensions || state.getDefaults().dimensions;
+        const overhang = state.building.overhang;
+
+        const inputs = {
+            'param-width': width,
+            'param-length': length,
+            'param-height': height,
+            'param-overhang': overhang
+        };
+
+        Object.entries(inputs).forEach(([elemId, value]) => {
+            const input = document.getElementById(elemId);
+            if (input) input.value = value;
         });
     },
 
     /**
      * Handle dimension input changes
-     * @param {string} dimension - Dimension name
+     * CRITICAL: Updates nested dimensions object
+     * @param {string} dimension - Dimension name (width, length, height, overhang)
      * @param {*} value - New value
      */
     handleDimensionChange(dimension, value) {
-        // Validate dimension value
-        if (dimension === 'roofPitch') {
-            if (constants.roofPitches.includes(value)) {
-                state.setBuilding(dimension, value);
-                pricing.calculate();
-                viewer.renderPipeline();
-            }
-        } else {
-            const config = constants.dimensions[dimension];
-            if (config) {
-                const numValue = parseFloat(value);
-                if (!isNaN(numValue) && numValue >= config.min && numValue <= config.max) {
-                    state.setBuilding(dimension, numValue);
-                    pricing.calculate();
-                    viewer.renderPipeline();
-                }
-            }
+        const numValue = parseFloat(value);
+        
+        if (isNaN(numValue)) return;
+
+        if (['width', 'length', 'height'].includes(dimension)) {
+            // Update nested dimensions object
+            const currentDims = state.building.dimensions || {};
+            state.setBuilding('dimensions', {
+                ...currentDims,
+                [dimension]: numValue
+            });
+        } else if (dimension === 'overhang') {
+            state.setBuilding('overhang', numValue);
         }
+
+        pricing.calculate();
+        viewer.renderPipeline();
     },
 
     /**
@@ -76,11 +106,11 @@ const controls = {
      */
     initColorControls() {
         const colorGroups = [
-            { id: 'roof-color', stateKey: 'roofColor', palette: 'roof' },
-            { id: 'wall-color', stateKey: 'wallColor', palette: 'wall' },
-            { id: 'trim-color', stateKey: 'trimColor', palette: 'trim' },
-            { id: 'wainscot-color', stateKey: 'wainscotColor', palette: 'wainscot' },
-            { id: 'interior-color', stateKey: 'interiorColor', palette: 'interior' }
+            { id: 'swatches-roof', stateKey: 'roofColor', palette: 'roof' },
+            { id: 'swatches-wall', stateKey: 'wallColor', palette: 'wall' },
+            { id: 'swatches-trim', stateKey: 'trimColor', palette: 'trim' },
+            { id: 'swatches-wainscot', stateKey: 'wainscotColor', palette: 'wainscot' },
+            { id: 'swatches-interior', stateKey: 'interiorColor', palette: 'interior' }
         ];
 
         colorGroups.forEach(group => {
@@ -120,12 +150,10 @@ const controls = {
      * @param {HTMLElement} container - Swatch container element
      */
     handleColorChange(stateKey, colorValue, container) {
-        // Remove active class from all swatches
         container.querySelectorAll('.swatch-btn').forEach(btn => {
             btn.classList.remove('active');
         });
 
-        // Add active class to clicked swatch
         const activeBtn = container.querySelector(`[data-color="${colorValue}"]`);
         if (activeBtn) {
             activeBtn.classList.add('active');
@@ -139,7 +167,7 @@ const controls = {
      */
     initFeatureToggles() {
         // Wainscot toggle
-        const wainscotToggle = document.getElementById('wainscot-enable-toggle');
+        const wainscotToggle = document.getElementById('toggle-wainscot');
         if (wainscotToggle) {
             const buttons = wainscotToggle.querySelectorAll('.btn-toggle');
             buttons.forEach(btn => {
@@ -149,14 +177,9 @@ const controls = {
                     this.setToggleActive(wainscotToggle, enabled);
                     state.setBuilding('wainscotEnabled', enabled);
                     
-                    // Show/hide wainscot color container
                     const colorContainer = document.getElementById('wainscot-color-container');
                     if (colorContainer) {
-                        if (enabled) {
-                            colorContainer.classList.remove('hidden');
-                        } else {
-                            colorContainer.classList.add('hidden');
-                        }
+                        colorContainer.classList.toggle('hidden', !enabled);
                     }
                     
                     pricing.calculate();
@@ -164,7 +187,6 @@ const controls = {
                 });
             });
 
-            // Set initial state
             const enabled = state.getBuilding('wainscotEnabled');
             const initialBtn = wainscotToggle.querySelector(`[data-value="${enabled}"]`);
             if (initialBtn) {
@@ -173,7 +195,7 @@ const controls = {
         }
 
         // Interior toggle
-        const interiorToggle = document.getElementById('interior-enable-toggle');
+        const interiorToggle = document.getElementById('toggle-interior');
         if (interiorToggle) {
             const buttons = interiorToggle.querySelectorAll('.btn-toggle');
             buttons.forEach(btn => {
@@ -183,14 +205,9 @@ const controls = {
                     this.setToggleActive(interiorToggle, enabled);
                     state.setBuilding('interiorEnabled', enabled);
                     
-                    // Show/hide interior color container
                     const colorContainer = document.getElementById('interior-color-container');
                     if (colorContainer) {
-                        if (enabled) {
-                            colorContainer.classList.remove('hidden');
-                        } else {
-                            colorContainer.classList.add('hidden');
-                        }
+                        colorContainer.classList.toggle('hidden', !enabled);
                     }
                     
                     pricing.calculate();
@@ -198,7 +215,6 @@ const controls = {
                 });
             });
 
-            // Set initial state
             const enabled = state.getBuilding('interiorEnabled');
             const initialBtn = interiorToggle.querySelector(`[data-value="${enabled}"]`);
             if (initialBtn) {
@@ -224,50 +240,83 @@ const controls = {
 
     /**
      * Initialize opening injection buttons (add doors/windows)
+     * CRITICAL FIX: Now properly binds to btn-inject buttons in HTML
      */
     initOpeningInjectors() {
-        const injectorGrid = document.getElementById('injector-grid');
-        if (injectorGrid) {
-            Object.entries(constants.openingTypes).forEach(([typeKey, typeConfig]) => {
-                const btn = document.createElement('button');
-                btn.className = 'btn-inject';
-                btn.innerHTML = `
-                    <strong>${typeConfig.label}</strong>
-                    <small>${typeConfig.defaultWidth}' × ${typeConfig.defaultHeight}'</small>
-                `;
-                
+        const injectorButtons = document.querySelectorAll('.btn-inject');
+        injectorButtons.forEach(btn => {
+            const openingType = btn.dataset.type;
+            if (openingType) {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    this.addOpening(typeKey);
+                    this.injectNewOpening(openingType);
                 });
-
-                injectorGrid.appendChild(btn);
-            });
-        }
+            }
+        });
     },
 
     /**
-     * Add opening to current face
-     * @param {string} openingType - Type of opening to add
+     * Inject new opening on current wall
+     * CRITICAL FIX: Uses normalized 0-1 coordinate system
+     * @param {string} openingType - Type of opening ('overhead', 'bifold', 'slider', 'walk_door', 'window')
      */
-    addOpening(openingType) {
-        const typeConfig = constants.openingTypes[openingType];
-        if (typeConfig) {
-            const newOpening = {
-                type: openingType,
-                face: state.currentFace,
-                x: 100,
-                y: 50,
-                width: typeConfig.defaultWidth,
-                height: typeConfig.defaultHeight
-            };
-
-            state.addOpening(newOpening);
-            pricing.calculate();
-            viewer.renderPipeline();
+    injectNewOpening(openingType) {
+        // CRITICAL: Opening created with normalized coordinates
+        const newOpening = {
+            type: openingType,
+            face: state.currentFace,
             
-            console.log(`Added ${openingType} to ${state.currentFace} face`);
-        }
+            // Normalized coordinates (0-1 scale)
+            x: 0.35,      // 35% from left edge
+            y: 0.25,      // 25% from top edge
+            width: 0.20,  // 20% of wall width
+            height: 0.30  // 30% of wall height
+        };
+
+        const openingId = state.addOpening(newOpening);
+        state.selectOpening(openingId);
+        
+        pricing.calculate();
+        viewer.renderPipeline();
+        
+        console.log(`✓ Added ${openingType} to ${state.currentFace} face at normalized coords (${newOpening.x}, ${newOpening.y})`);
+    },
+
+    /**
+     * Initialize wall/face tab switching
+     * CRITICAL: Connects tab buttons to wall projection engine
+     */
+    initWallSwitching() {
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const face = btn.dataset.face;
+                if (face) {
+                    // Update active tab UI
+                    tabButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // Update state and trigger render
+                    state.setCurrentFace(face);
+                    viewer.renderPipeline();
+                    
+                    // Update viewer title
+                    const titleMap = {
+                        'front': 'Front Wall Elevation View',
+                        'rear': 'Rear Wall Elevation View',
+                        'left': 'Left Side Elevation View',
+                        'right': 'Right Side Elevation View'
+                    };
+                    const titleEl = document.getElementById('viewer-title');
+                    if (titleEl) titleEl.textContent = titleMap[face] || 'Elevation View';
+                }
+            });
+        });
+
+        // Set initial active tab
+        const frontTab = document.querySelector('[data-face="front"]');
+        if (frontTab) frontTab.classList.add('active');
     },
 
     /**
@@ -277,11 +326,12 @@ const controls = {
         document.addEventListener('app:state-change', (e) => {
             const { category, path } = e.detail;
 
-            // Update UI when state changes
             if (category === 'building') {
-                this.syncUIToState();
+                this.syncDimensionsToUI();
             } else if (category === 'ui') {
                 if (path === 'selectedOpening') {
+                    viewer.renderPipeline();
+                } else if (path === 'currentFace') {
                     viewer.renderPipeline();
                 }
             }
@@ -293,22 +343,14 @@ const controls = {
      * Called after state is restored or changed externally
      */
     syncUIToState() {
-        // Update dimension inputs
-        const dimensions = ['width', 'length', 'height', 'overhang', 'roofPitch'];
-        dimensions.forEach(dim => {
-            const input = document.getElementById(`building-${dim}`);
-            if (input) {
-                input.value = state.getBuilding(dim);
-            }
-        });
+        this.syncDimensionsToUI();
 
-        // Update color swatches
         const colorGroups = [
-            { id: 'roof-color', stateKey: 'roofColor' },
-            { id: 'wall-color', stateKey: 'wallColor' },
-            { id: 'trim-color', stateKey: 'trimColor' },
-            { id: 'wainscot-color', stateKey: 'wainscotColor' },
-            { id: 'interior-color', stateKey: 'interiorColor' }
+            { id: 'swatches-roof', stateKey: 'roofColor' },
+            { id: 'swatches-wall', stateKey: 'wallColor' },
+            { id: 'swatches-trim', stateKey: 'trimColor' },
+            { id: 'swatches-wainscot', stateKey: 'wainscotColor' },
+            { id: 'swatches-interior', stateKey: 'interiorColor' }
         ];
 
         colorGroups.forEach(group => {
