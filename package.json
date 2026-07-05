@@ -1,0 +1,23 @@
+{
+  "name": "mbllc-building-estimator",
+  "version": "1.0.0",
+  "description": "Moravian Builders LLC - Building Configuration & Pricing Estimator",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "building",
+    "configurator",
+    "estimator",
+    "pricing"
+  ],
+  "author": "Moravian Builders LLC",
+  "license": "PROPRIETARY",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
