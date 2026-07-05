@@ -87,6 +87,30 @@ const viewer = {
     },
 
     /**
+     * Get wall projection dimensions based on active wall
+     * CRITICAL FIX: Each wall gets proper width/height assignment
+     * @param {string} activeWall - Current wall being viewed
+     * @param {object} building - Building state object
+     * @returns {object} Projection with {w, h, mirror}
+     */
+    getWallProjection(activeWall, building) {
+        const { width, length, height } = building.dimensions;
+
+        switch (activeWall) {
+            case "front":
+            case "rear":
+                return { w: width, h: height, mirror: activeWall === "rear" };
+
+            case "left":
+            case "right":
+                return { w: length, h: height, mirror: activeWall === "right" };
+
+            default:
+                return { w: width, h: height, mirror: false };
+        }
+    },
+
+    /**
      * Main render pipeline
      * Called whenever state changes or view needs update
      */
@@ -98,11 +122,14 @@ const viewer = {
             this.svg.removeChild(this.svg.firstChild);
         }
 
+        // Get current wall projection (CRITICAL FIX)
+        const projection = this.getWallProjection(state.currentFace, state.building);
+
         // Render building envelope
         this.renderBuilding();
 
-        // Render openings on current face
-        this.renderOpenings();
+        // Render openings on current face with projection awareness
+        this.renderOpenings(projection);
 
         // Render selection UI if opening selected
         if (state.selectedOpening) {
@@ -175,8 +202,10 @@ const viewer = {
 
     /**
      * Render openings (doors and windows) on current face
+     * CRITICAL FIX: Now projection-aware and normalized
+     * @param {object} projection - Wall projection data
      */
-    renderOpenings() {
+    renderOpenings(projection) {
         const openings = state.getOpeningsByFace(state.currentFace);
         const cfg = constants.svg;
         const scale = cfg.gridSize;
@@ -185,8 +214,10 @@ const viewer = {
         group.setAttribute('class', 'openings-layer');
 
         openings.forEach(opening => {
-            const x = cfg.padding + opening.x;
-            const y = cfg.padding + opening.y;
+            // CRITICAL FIX: Convert normalized coordinates to SVG space
+            // opening.x and opening.y are 0-1 normalized values
+            const x = cfg.padding + (opening.x * projection.w * scale);
+            const y = cfg.padding + (opening.y * projection.h * scale);
             const w = opening.width * scale;
             const h = opening.height * scale;
 
@@ -243,8 +274,10 @@ const viewer = {
 
         const cfg = constants.svg;
         const scale = cfg.gridSize;
-        const x = cfg.padding + opening.x;
-        const y = cfg.padding + opening.y;
+        const projection = this.getWallProjection(state.currentFace, state.building);
+        
+        const x = cfg.padding + (opening.x * projection.w * scale);
+        const y = cfg.padding + (opening.y * projection.h * scale);
         const w = opening.width * scale;
         const h = opening.height * scale;
         const handleSize = 8;
