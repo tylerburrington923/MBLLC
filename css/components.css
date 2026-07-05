@@ -48,6 +48,11 @@
     border-color: var(--color-text-dark);
 }
 
+.button-sm {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-sm);
+}
+
 .button-danger {
     background-color: var(--color-danger);
     color: var(--color-white);
@@ -445,4 +450,192 @@
 
 .contact-container .form .form-group:last-child {
     margin-bottom: 0;
+}
+
+/* Gallery Carousel Styles */
+.gallery-carousel {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    margin: var(--space-8) auto;
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.carousel-wrapper {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    background: var(--color-bg-light);
+}
+
+.carousel-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    display: block;
+}
+
+.carousel-controls {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-4);
+    pointer-events: none;
+}
+
+.carousel-btn {
+    pointer-events: auto;
+    background: rgba(0, 0, 0, 0.5);
+    color: var(--color-white);
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.carousel-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(1.1);
+}
+
+.carousel-dots-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: var(--space-4);
+    background: var(--color-bg-light);
+}
+
+.carousel-dots {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.carousel-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--color-border);
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    padding: 0;
+}
+
+.carousel-dot.active {
+    background: var(--color-navy);
+    transform: scale(1.2);
+}
+
+.carousel-caption {
+    padding: var(--space-6);
+    background: var(--color-white);
+    text-align: center;
+}
+
+.carousel-caption h3 {
+    font-size: var(--font-size-xl);
+    color: var(--color-navy);
+    margin-bottom: var(--space-2);
+}
+
+.carousel-caption p {
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-4);
+    font-size: var(--font-size-base);
+}
+
+/* Lightbox Modal Styles */
+.lightbox-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.lightbox-container {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+.lightbox-image-wrapper {
+    position: relative;
+    overflow: hidden;
+    background: var(--color-bg-light);
+}
+
+.lightbox-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    max-height: 80vh;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-white);
+    border: none;
+    font-size: 2.5rem;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.lightbox-controls {
+    position: absolute;
+    bottom: var(--space-4);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: var(--space-2);
+}
+
+.lightbox-prev,
+.lightbox-next {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-white);
+    border: none;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    font-size: var(--font-size-base);
+}
+
+.lightbox-prev:hover,
+.lightbox-next:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(1.05);
 }
