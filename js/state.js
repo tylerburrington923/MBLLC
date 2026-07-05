@@ -2,7 +2,7 @@
  * @file state.js
  * @description Single Source of Truth State Management Container Layer.
  * Centralized reactive state store for all application data mutations and queries.
- * PATCH 2: Fixed opening normalization - x/y now 0-1 normalized, not pixels
+ * GLOBAL FIX: Wall unification + opening position updates + proper storage
  */
 
 import { constants } from './constants.js';
@@ -17,12 +17,6 @@ const state = {
     
     // Lead form contact information
     lead: {},
-    
-    // Currently selected opening node in viewer
-    selectedOpening: null,
-    
-    // Current viewing face (front, rear, left, right)
-    currentFace: 'front',
 
     /**
      * Initialize state with default configuration parameters
@@ -32,11 +26,12 @@ const state = {
         this.building = this.getDefaults();
         this.lead = this.getLeadDefaults();
         this.loadFromStorage();
-        console.log('State initialized with defaults:', this.building);
+        console.log('✓ State initialized with defaults');
     },
 
     /**
      * Get default building configuration object
+     * CRITICAL: Unified wall system + drag state
      * @returns {Object} Default configuration template
      */
     getDefaults() {
@@ -61,8 +56,14 @@ const state = {
             interiorEnabled: false,
             interiorColor: '#E2E8F0',
 
-            // Openings array - FIXED: now uses normalized coordinates
-            openings: []
+            // Openings array - normalized coordinates
+            openings: [],
+
+            // GLOBAL FIX: Unified wall tracking
+            activeWall: 'front',
+
+            // Drag system state
+            selectedOpeningId: null
         };
     },
 
@@ -79,6 +80,39 @@ const state = {
             state: '',
             specialRequests: ''
         };
+    },
+
+    /**
+     * Set active wall for viewing
+     * PHASE 1: Unified wall system
+     * @param {string} wall - Wall name (front, rear, left, right)
+     */
+    setActiveWall(wall) {
+        if (this.building.activeWall !== wall) {
+            this.building.activeWall = wall;
+            this.building.selectedOpeningId = null; // deselect when switching
+            this.dispatchChange('ui', 'activeWall', wall);
+            this.saveToStorage();
+        }
+    },
+
+    /**
+     * Get active wall
+     * @returns {string} Current active wall
+     */
+    getActiveWall() {
+        return this.building.activeWall || 'front';
+    },
+
+    /**
+     * Select opening for editing
+     * @param {string|null} openingId - ID of opening or null
+     */
+    selectOpening(openingId) {
+        if (this.building.selectedOpeningId !== openingId) {
+            this.building.selectedOpeningId = openingId;
+            this.dispatchChange('ui', 'selectedOpening', openingId);
+        }
     },
 
     /**
@@ -163,25 +197,25 @@ const state = {
 
     /**
      * Add opening (door/window) to building
-     * CRITICAL FIX: Now uses normalized 0-1 coordinates instead of pixels
+     * PHASE 2: Unified schema with activeWall
      * @param {Object} opening - Opening configuration object
      * @returns {string} Unique opening ID
      */
     addOpening(opening) {
-        const id = `opening-${Date.now()}`;
+        const id = `opening-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         
-        // CRITICAL: Convert pixel/default values to normalized 0-1
         const fullOpening = {
             id,
             type: opening.type,
-            face: opening.face || 'front',
+            face: opening.face || this.building.activeWall || 'front',
             
-            // NORMALIZED COORDINATES (0-1 scale)
-            x: opening.x !== undefined ? opening.x : 0.4,    // 40% across width
-            y: opening.y !== undefined ? opening.y : 0.3,    // 30% down height
-            width: opening.width !== undefined ? opening.width : 0.15,  // 15% of wall width
-            height: opening.height !== undefined ? opening.height : 0.25, // 25% of wall height
+            // Normalized coordinates (0-1 scale)
+            x: opening.x !== undefined ? opening.x : 0.4,
+            y: opening.y !== undefined ? opening.y : 0.3,
+            width: opening.width !== undefined ? opening.width : 0.20,
+            height: opening.height !== undefined ? opening.height : 0.25,
             
+            createdAt: Date.now(),
             ...opening
         };
         
@@ -209,22 +243,34 @@ const state = {
     },
 
     /**
-     * Update opening properties
-     * CRITICAL: Clamps normalized values to 0-1 range
-     * @param {string} openingId - ID of opening to update
-     * @param {Object} updates - Properties to update
+     * Update opening position
+     * PHASE 5: Used by drag system
+     * @param {string} openingId - ID of opening
+     * @param {number} x - Normalized X (0-1)
+     * @param {number} y - Normalized Y (0-1)
      */
-    updateOpening(openingId, updates) {
+    updateOpeningPosition(openingId, x, y) {
         const opening = this.building.openings.find(o => o.id === openingId);
         if (opening) {
-            // Clamp normalized coordinates to 0-1 range
-            if (updates.x !== undefined) updates.x = Math.max(0, Math.min(1, updates.x));
-            if (updates.y !== undefined) updates.y = Math.max(0, Math.min(1, updates.y));
-            if (updates.width !== undefined) updates.width = Math.max(0.05, Math.min(1, updates.width));
-            if (updates.height !== undefined) updates.height = Math.max(0.05, Math.min(1, updates.height));
-            
-            Object.assign(opening, updates);
-            this.dispatchChange('openings', 'update', opening);
+            opening.x = Math.max(0, Math.min(1, x));
+            opening.y = Math.max(0, Math.min(1, y));
+            this.dispatchChange('openings', 'move', opening);
+            this.saveToStorage();
+        }
+    },
+
+    /**
+     * Update opening dimensions
+     * @param {string} openingId - ID of opening
+     * @param {number} width - New width (0-1)
+     * @param {number} height - New height (0-1)
+     */
+    updateOpeningDimensions(openingId, width, height) {
+        const opening = this.building.openings.find(o => o.id === openingId);
+        if (opening) {
+            opening.width = Math.max(0.05, Math.min(1, width));
+            opening.height = Math.max(0.05, Math.min(1, height));
+            this.dispatchChange('openings', 'resize', opening);
             this.saveToStorage();
         }
     },
@@ -240,44 +286,23 @@ const state = {
 
     /**
      * Get all openings on current face
+     * PHASE 4: Safe filtering
      * @param {string} face - Face to filter by
      * @returns {Array} Openings array
      */
     getOpeningsByFace(face) {
-        return this.building.openings.filter(o => o.face === face);
-    },
-
-    /**
-     * Set selected opening node
-     * @param {string|null} openingId - ID of selected opening or null
-     */
-    selectOpening(openingId) {
-        if (this.selectedOpening !== openingId) {
-            this.selectedOpening = openingId;
-            this.dispatchChange('ui', 'selectedOpening', openingId);
-        }
-    },
-
-    /**
-     * Set current viewing face
-     * @param {string} face - Face to view ('front', 'rear', 'left', 'right')
-     */
-    setCurrentFace(face) {
-        if (this.currentFace !== face) {
-            this.currentFace = face;
-            this.dispatchChange('ui', 'currentFace', face);
-        }
+        return (this.building.openings || []).filter(o => o.face === face);
     },
 
     /**
      * Dispatch custom change event for reactivity
      * @param {string} category - Category of change
-     * @param {string} path - Property path changed
-     * @param {*} value - New value
+     * @param {string} action - Action performed
+     * @param {*} payload - Change payload
      */
-    dispatchChange(category, path, value) {
+    dispatchChange(category, action, payload) {
         const event = new CustomEvent('app:state-change', {
-            detail: { category, path, value, timestamp: Date.now() }
+            detail: { category, action, payload, timestamp: Date.now() }
         });
         document.dispatchEvent(event);
     },
@@ -312,7 +337,7 @@ const state = {
                 if (ageMs < sevenDaysMs) {
                     this.building = { ...this.getDefaults(), ...stateSnapshot.building };
                     this.lead = { ...this.getLeadDefaults(), ...stateSnapshot.lead };
-                    console.log('State restored from localStorage');
+                    console.log('✓ State restored from localStorage');
                 } else {
                     this.clearStorage();
                 }
@@ -340,8 +365,6 @@ const state = {
     reset() {
         this.building = this.getDefaults();
         this.lead = this.getLeadDefaults();
-        this.selectedOpening = null;
-        this.currentFace = 'front';
         this.clearStorage();
         this.dispatchChange('app', 'reset', null);
     },
