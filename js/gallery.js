@@ -4,9 +4,6 @@
  * Carousel, lightbox modal, image loading, and navigation
  */
 
-import { state } from './state.js';
-import { constants } from './constants.js';
-
 /**
  * Gallery module
  * Handles project showcase carousel and lightbox viewer
@@ -65,9 +62,8 @@ const gallery = {
             this.setupLightbox();
             this.setupKeyboard();
             this.startAutoplay();
+            console.log('✓ Gallery initialized with ' + this.images.length + ' images');
         }
-        
-        console.log('Gallery initialized with ' + this.images.length + ' images');
     },
 
     /**
@@ -78,17 +74,14 @@ const gallery = {
         const nextBtn = document.getElementById('carousel-next');
         const dotsContainer = document.getElementById('carousel-dots');
 
-        // Previous button
         if (prevBtn) {
             prevBtn.addEventListener('click', () => this.previousSlide());
         }
 
-        // Next button
         if (nextBtn) {
             nextBtn.addEventListener('click', () => this.nextSlide());
         }
 
-        // Create dot indicators
         if (dotsContainer) {
             this.images.forEach((_, index) => {
                 const dot = document.createElement('button');
@@ -99,7 +92,6 @@ const gallery = {
             });
         }
 
-        // Touch support
         this.galleryContainer.addEventListener('touchstart', (e) => {
             this.touchStartX = e.changedTouches[0].screenX;
             this.stopAutoplay();
@@ -120,25 +112,21 @@ const gallery = {
     setupLightbox() {
         if (!this.lightboxModal) return;
 
-        // Close button
         const closeBtn = this.lightboxModal.querySelector('.lightbox-close');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.closeLightbox());
         }
 
-        // Previous in lightbox
         const prevBtn = this.lightboxModal.querySelector('.lightbox-prev');
         if (prevBtn) {
             prevBtn.addEventListener('click', () => this.previousSlide());
         }
 
-        // Next in lightbox
         const nextBtn = this.lightboxModal.querySelector('.lightbox-next');
         if (nextBtn) {
             nextBtn.addEventListener('click', () => this.nextSlide());
         }
 
-        // Close on background click
         this.lightboxModal.addEventListener('click', (e) => {
             if (e.target === this.lightboxModal) {
                 this.closeLightbox();
@@ -163,15 +151,13 @@ const gallery = {
      * Handle touch swipe gesture
      */
     handleSwipe() {
-        const threshold = 50; // Minimum swipe distance
+        const threshold = 50;
         const diff = this.touchStartX - this.touchEndX;
 
         if (Math.abs(diff) > threshold) {
             if (diff > 0) {
-                // Swiped left → next slide
                 this.nextSlide();
             } else {
-                // Swiped right → previous slide
                 this.previousSlide();
             }
         }
@@ -212,26 +198,21 @@ const gallery = {
 
         const image = this.images[this.currentIndex];
         
-        // Update main carousel image
         const carouselImage = this.galleryContainer.querySelector('.carousel-image');
         if (carouselImage) {
             carouselImage.src = image.url;
             carouselImage.alt = image.alt;
         }
 
-        // Update caption
-        const caption = this.galleryContainer.querySelector('.carousel-caption');
-        if (caption) {
-            caption.querySelector('h3').textContent = image.title;
-            caption.querySelector('p').textContent = image.description;
-        }
+        const titleEl = this.galleryContainer.querySelector('#carousel-title');
+        const descEl = this.galleryContainer.querySelector('#carousel-description');
+        if (titleEl) titleEl.textContent = image.title;
+        if (descEl) descEl.textContent = image.description;
 
-        // Update dot indicators
         document.querySelectorAll('.carousel-dot').forEach((dot, index) => {
             dot.classList.toggle('active', index === this.currentIndex);
         });
 
-        // Update lightbox if open
         if (this.lightboxModal && this.lightboxModal.style.display === 'flex') {
             this.updateLightbox();
         }
@@ -279,7 +260,7 @@ const gallery = {
     startAutoplay() {
         this.autoplayInterval = setInterval(() => {
             this.nextSlide();
-        }, 5000); // Change slide every 5 seconds
+        }, 5000);
     },
 
     /**
