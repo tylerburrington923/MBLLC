@@ -1,0 +1,390 @@
+/* Core Structural Operational Platform Dual-Column Spatial Assembly Matrix Grid rules */
+
+.configurator {
+    background-color: var(--color-bg-light);
+    padding: var(--space-16) 0;
+}
+
+.configurator-grid {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: var(--space-8);
+    align-items: start;
+}
+
+.controls {
+    max-height: 90vh;
+    overflow-y: auto;
+    padding-right: var(--space-2);
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Custom scrollbar styling for controls panel */
+.controls::-webkit-scrollbar {
+    width: 8px;
+}
+
+.controls::-webkit-scrollbar-track {
+    background: var(--color-border);
+    border-radius: 4px;
+}
+
+.controls::-webkit-scrollbar-thumb {
+    background: var(--color-text-light);
+    border-radius: 4px;
+    transition: var(--transition-fast);
+}
+
+.controls::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted);
+}
+
+/* Viewer Column Container */
+.viewer-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+/* Card within Configurator */
+.configurator .card {
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
+    margin-bottom: var(--space-4);
+    box-shadow: var(--shadow-sm);
+}
+
+.configurator .card h2 {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--space-4);
+    color: var(--color-navy);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--space-2);
+}
+
+.configurator .card:last-child {
+    margin-bottom: 0;
+}
+
+/* Form Groups in Configurator */
+.configurator .form-group {
+    margin-bottom: var(--space-4);
+}
+
+.configurator .form-group label {
+    display: block;
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-dark);
+}
+
+.configurator .form-group select,
+.configurator .form-group input[type="text"],
+.configurator .form-group input[type="number"] {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-base);
+    background-color: var(--color-white);
+    transition: var(--transition-fast);
+}
+
+.configurator .form-group select:focus,
+.configurator .form-group input[type="text"]:focus,
+.configurator .form-group input[type="number"]:focus {
+    outline: none;
+    border-color: var(--color-focus);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Special Requests Textarea */
+.configurator .form-group textarea {
+    width: 100%;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-family: inherit;
+    resize: vertical;
+    min-height: 120px;
+    background-color: var(--color-white);
+    transition: var(--transition-fast);
+}
+
+.configurator .form-group textarea:focus {
+    outline: none;
+    border-color: var(--color-focus);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Injection Grid (Door/Window Buttons) */
+.injector-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-2);
+}
+
+.btn-inject {
+    padding: var(--space-3);
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+}
+
+.btn-inject:hover {
+    background: var(--color-navy);
+    color: var(--color-white);
+    border-color: var(--color-navy);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-inject:active {
+    transform: translateY(0);
+}
+
+.btn-inject:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+}
+
+/* Modifier Card - Hidden by Default */
+#modifier-card {
+    display: block;
+}
+
+#modifier-card.hidden {
+    display: none;
+}
+
+/* Modifier Actions */
+.modifier-actions {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+}
+
+.modifier-actions .button {
+    flex: 1;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+}
+
+.modifier-actions .button-outline {
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+}
+
+.modifier-actions .button-outline:hover {
+    background: var(--color-border);
+}
+
+.modifier-actions .button-danger {
+    background: var(--color-danger);
+    color: var(--color-white);
+}
+
+.modifier-actions .button-danger:hover {
+    background: #DC2626;
+}
+
+/* Summary Section - Always Visible */
+.summary {
+    background: linear-gradient(135deg, var(--color-navy) 0%, #051120 100%);
+    color: var(--color-white);
+    border-radius: var(--radius-md);
+    padding: var(--space-8);
+    margin-top: var(--space-6);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-8);
+}
+
+.summary-details h4 {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--space-4);
+    color: var(--color-gold);
+    font-weight: var(--font-weight-bold);
+}
+
+#summary-spec-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#summary-spec-list li {
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-sm);
+    color: rgba(255, 255, 255, 0.95);
+    padding-left: var(--space-4);
+    position: relative;
+    line-height: var(--line-height-normal);
+}
+
+#summary-spec-list li::before {
+    content: '●';
+    position: absolute;
+    left: 0;
+    color: var(--color-gold);
+    font-weight: bold;
+}
+
+.summary-pricing {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: var(--space-6);
+    border-left: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.price-lbl {
+    display: block;
+    font-size: var(--font-size-sm);
+    opacity: 0.9;
+    margin-bottom: var(--space-2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#price-badge {
+    display: block;
+    font-size: 2.5rem;
+    color: var(--color-gold);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    margin-bottom: var(--space-4);
+}
+
+.disclaimer {
+    font-size: var(--font-size-xs);
+    opacity: 0.75;
+    line-height: var(--line-height-relaxed);
+    margin: 0;
+}
+
+/* Wainscot Color Container - Hidden by Default */
+#wainscot-color-container,
+#interior-color-container {
+    display: block;
+    animation: slideDown var(--transition-base);
+}
+
+#wainscot-color-container.hidden,
+#interior-color-container.hidden {
+    display: none;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Swatches within Configurator */
+.configurator .swatch-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+
+.configurator .swatch-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid var(--color-border);
+    cursor: pointer;
+    position: relative;
+    transition: var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.configurator .swatch-btn:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-md);
+}
+
+.configurator .swatch-btn.active {
+    border-color: var(--color-navy);
+    transform: scale(1.15);
+    box-shadow: 0 0 0 2px var(--color-white), 0 0 0 4px var(--color-navy);
+}
+
+.configurator .swatch-btn.active::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--color-white);
+    font-weight: bold;
+    font-size: var(--font-size-base);
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Toggles within Configurator */
+.configurator .toggle-row {
+    display: flex;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background-color: var(--color-bg-light);
+    margin-top: var(--space-2);
+}
+
+.configurator .btn-toggle {
+    flex: 1;
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-bg-light);
+    border: none;
+    cursor: pointer;
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-dark);
+    transition: var(--transition-fast);
+    text-align: center;
+}
+
+.configurator .btn-toggle:not(:last-child) {
+    border-right: 1px solid var(--color-border);
+}
+
+.configurator .btn-toggle:hover {
+    background-color: var(--color-border);
+}
+
+.configurator .btn-toggle.active {
+    background: var(--color-navy);
+    color: var(--color-white);
+}
+
+.configurator .btn-toggle:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: -1px;
+}
