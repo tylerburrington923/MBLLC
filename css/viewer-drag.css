@@ -1,0 +1,258 @@
+/* ===========================
+   PHASE 7: Drag & Drop Styling
+   Viewer Interactive Feedback
+   =========================== */
+
+/* SVG Canvas Container */
+svg#building-svg {
+    touch-action: none;
+    user-select: none;
+}
+
+/* Grid Lines */
+.grid-layer .grid-line {
+    stroke: #F0F0F0;
+    stroke-width: 0.5;
+    pointer-events: none;
+}
+
+.grid-layer .grid-line-major {
+    stroke: #D0D0D0;
+    stroke-width: 1;
+    pointer-events: none;
+}
+
+/* Building Envelope */
+.envelope-layer {
+    pointer-events: none;
+}
+
+.wall-rect {
+    fill: #64748B;
+    stroke: #333;
+    stroke-width: 2;
+    transition: fill 0.15s ease;
+}
+
+.wainscot-rect {
+    fill: #475569;
+    stroke: none;
+}
+
+/* ===========================
+   OPENING NODES - Core Drag Elements
+   =========================== */
+
+.opening-node {
+    cursor: grab;
+    fill: #E2E8F0;
+    stroke: #333;
+    stroke-width: 1;
+    transition: fill 0.1s ease, stroke 0.1s ease;
+    user-select: none;
+    pointer-events: auto;
+}
+
+/* Hover state - provide visual feedback */
+.opening-node:hover {
+    fill: #D4E4F7;
+    stroke: #222;
+    stroke-width: 2;
+}
+
+/* Active drag state */
+.opening-node:active {
+    cursor: grabbing;
+    fill: #C0D9F0;
+}
+
+/* Selected state - highlighted for editing */
+.opening-node.selected {
+    stroke: #D4AF37;
+    stroke-width: 3;
+    fill: #FFF9E6;
+}
+
+/* ===========================
+   SELECTION LAYER
+   =========================== */
+
+.selection-layer {
+    pointer-events: none;
+}
+
+/* Selection outline - dashed box around selected opening */
+.selection-box {
+    fill: none;
+    stroke: #D4AF37;
+    stroke-width: 2;
+    stroke-dasharray: 5, 5;
+    animation: dashAnimation 0.5s linear infinite;
+}
+
+/* Resize handles - corner circles */
+.resize-handle {
+    cursor: grab;
+    fill: #D4AF37;
+    stroke: #FFF;
+    stroke-width: 1;
+    opacity: 0.8;
+    transition: opacity 0.15s ease, r 0.1s ease;
+    pointer-events: auto;
+}
+
+.resize-handle:hover {
+    opacity: 1;
+    r: 7;
+}
+
+.resize-handle:active {
+    cursor: grabbing;
+}
+
+/* Dashed animation for selection outline */
+@keyframes dashAnimation {
+    to {
+        stroke-dashoffset: -10;
+    }
+}
+
+/* ===========================
+   DRAG STATE FEEDBACK
+   =========================== */
+
+/* While dragging - subtle highlight */
+.opening-node.dragging {
+    opacity: 0.85;
+    filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.4));
+}
+
+/* ===========================
+   ACCESSIBILITY & INTERACTION
+   =========================== */
+
+/* Focus visible for keyboard navigation */
+.opening-node:focus-visible {
+    outline: 2px solid #D4AF37;
+    outline-offset: 2px;
+}
+
+/* Disabled state (if needed) */
+.opening-node:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* ===========================
+   RESPONSIVE ADJUSTMENTS
+   =========================== */
+
+@media (max-width: 768px) {
+    .resize-handle {
+        r: 6;
+    }
+
+    .opening-node {
+        stroke-width: 1.5;
+    }
+
+    .opening-node.selected {
+        stroke-width: 2.5;
+    }
+}
+
+@media (max-width: 480px) {
+    .resize-handle {
+        r: 5;
+    }
+
+    .opening-node {
+        stroke-width: 1;
+    }
+}
+
+/* ===========================
+   POINTER INTERACTION HINTS
+   =========================== */
+
+/* Cursor feedback based on context */
+svg#building-svg {
+    cursor: default;
+}
+
+svg#building-svg.dragging {
+    cursor: grabbing;
+}
+
+/* ===========================
+   TOUCH DEVICE OPTIMIZATIONS
+   =========================== */
+
+@media (hover: none) and (pointer: coarse) {
+    /* Touch devices - larger handles for touch targets */
+    .opening-node {
+        min-width: 24px;
+        min-height: 24px;
+    }
+
+    .resize-handle {
+        r: 8;
+    }
+
+    /* Reduce animations on touch devices */
+    .selection-box {
+        animation: none;
+        stroke-dasharray: none;
+    }
+}
+
+/* ===========================
+   PRINT STYLES
+   =========================== */
+
+@media print {
+    .opening-node {
+        fill: white;
+        stroke: #000;
+        stroke-width: 1;
+    }
+
+    .opening-node.selected {
+        stroke: #333;
+        stroke-width: 2;
+    }
+
+    .resize-handle {
+        display: none;
+    }
+
+    .selection-box {
+        display: none;
+    }
+
+    .selection-layer {
+        display: none;
+    }
+
+    .grid-layer {
+        opacity: 0.3;
+    }
+}
+
+/* ===========================
+   REDUCED MOTION
+   =========================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .opening-node {
+        transition: none;
+    }
+
+    .selection-box {
+        animation: none;
+    }
+
+    .resize-handle {
+        transition: none;
+    }
+}
