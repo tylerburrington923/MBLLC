@@ -1,0 +1,119 @@
+# Dependency directories
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build and distribution
+dist/
+build/
+*.bundle.js
+*.min.js
+*.min.css
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Browser cache
+.cache/
+.parcel-cache/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Compilation
+*.pyc
+__pycache__/
+*.class
+
+# Local development
+local.json
+config.local.js
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Package manager
+/node_modules
+/bower_components
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Credentials (never commit these!)
+credentials.json
+secrets.json
+.credentials
+private_key.pem
+
+# Generated files
+coverage/
+dist/
+build/
+.next/
+.nuxt/
+out/
+
+# Local storage backups
+localStorage.json
+
+# IDE-specific
+*.iml
+*.iws
+*.ipr
+.gradle/
+.idea/
+.vscode/
+*.code-workspace
+
+# Git merge files
+*.orig
+*.BACKUP.*
+*.BASE.*
+*.REMOTE.*
+*.LOCAL.*
+
+# System
+.AppleDouble
+.LSOverride
+
+# Misc
+.directory
+.~lock.*
