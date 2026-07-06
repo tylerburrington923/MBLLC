@@ -20,7 +20,7 @@ export class Renderer {
     const wall = state.walls[activeFaceId];
     if (!wall) return;
 
-    // 1. Calculate Spatial Scaling Transformations to fit the view box bounding box viewport safely
+    // 1. Calculate Spatial Scaling Transformations to fit the viewport box bounding box safely
     const maxWallLength = Math.max(state.width, state.length);
     const scaleX = (this.canvasWidth - (this.paddingX * 2)) / maxWallLength;
     const scaleY = 18.0; // Fixed projection multiplier mapping heights natively to preserve aspect targets
@@ -105,12 +105,13 @@ export class Renderer {
       rect.setAttribute('width', opWidth);
       rect.setAttribute('height', opHeight);
       rect.setAttribute('class', `opening-rect${opening.selected ? ' selected' : ''}`);
-      
-      // Render interior coloration patterns depending on selection states
       rect.setAttribute('fill', '#F1F5F9');
+      
+      // Mobile Pointer & Accessibility Focus Framework Additions
+      rect.setAttribute('focusable', 'true');
+      rect.setAttribute('tabindex', '0');
       
       this.openingsLayer.appendChild(rect);
     });
   }
 }
-
