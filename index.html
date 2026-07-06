@@ -171,7 +171,7 @@
         .tab-btn.active { background-color: #fff; color: var(--color-navy); box-shadow: var(--shadow-sm); }
         
         /* SVG VIEWER CANVAS */
-        .viewer-canvas-container { width: 100%; height: 480px; background-color: #0F172A; border-radius: var(--radius-md); position: relative; margin-top: 24px; overflow: hidden; box-shadow: inset 0 4px 12px rgba(0,0,0,0.3); }
+        .viewer-canvas-container { width: 100%; height: 480px; background-color: #0F172A; border-radius: var(--radius-md); position: relative; margin-top: 24px; overflow: hidden; box-shadow: inset 0 4px 12px rgba(0,0,0,0.3); touch-action: none; /* Optimized for mobile pointer tracking engine workflows */ }
         .viewer-svg { width: 100%; height: 100%; display: block; }
         
         /* SVG STYLING ENGINE */
@@ -180,7 +180,7 @@
         .roof-poly { fill: #334155; stroke: rgba(255,255,255,0.1); stroke-width: 1; transition: fill 0.3s ease; }
         .wall-rect { fill: #475569; stroke: rgba(255,255,255,0.1); stroke-width: 1; transition: fill 0.3s ease; }
         .wainscot-rect { fill: #1E293B; stroke: rgba(255,255,255,0.1); stroke-width: 1; transition: fill 0.3s ease; }
-        .opening-rect { fill: #F1F5F9; stroke: #334155; stroke-width: 2; cursor: move; transition: stroke 0.2s ease; }
+        .opening-rect { fill: #F1F5F9; stroke: #334155; stroke-width: 2; cursor: move; transition: stroke 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease; }
         .opening-rect:hover { stroke: var(--color-gold); }
         .opening-rect.selected { stroke: var(--color-gold); stroke-width: 3; filter: drop-shadow(0 0 4px rgba(212,175,55,0.5)); }
         .dim-line-svg { stroke: var(--color-slate-400); stroke-width: 1.5; stroke-dasharray: 4 4; }
@@ -275,7 +275,6 @@
 </head>
 <body>
 
-    <!-- HEADER -->
     <header class="header">
         <div class="container header-container">
             <a href="#home" class="logo" aria-label="Moravian Builders Home">
@@ -293,10 +292,8 @@
 
     <main id="main-content">
         
-        <!-- HERO SECTION -->
         <section id="home" class="hero" aria-label="Introduction Image Showcase">
             <div id="hero-slider" class="hero-slider">
-                <!-- Fallback asset strings provided as schema identifiers for JS pipeline assembly injection later -->
                 <div class="hero-slide active" style="background-image: url('images/hero/slide1.jpg');"></div>
                 <div class="hero-slide" style="background-image: url('images/hero/slide2.jpg');"></div>
                 <div class="hero-slide" style="background-image: url('images/hero/slide3.jpg');"></div>
@@ -311,7 +308,6 @@
             </div>
         </section>
 
-        <!-- TRUST STRIP -->
         <section class="trust-strip" aria-label="Core Quality Pillars">
             <div class="container trust-container">
                 <div class="trust-item">
@@ -329,7 +325,6 @@
             </div>
         </section>
 
-        <!-- GALLERY SECTION (UNIFIED CAROUSEL + LIGHTBOX SYSTEM) -->
         <section id="gallery" class="gallery" aria-labelledby="gallery-heading">
             <div class="container">
                 <div class="gallery-header">
@@ -340,7 +335,6 @@
                 <div class="carousel-container">
                     <div class="carousel-view">
                         <button type="button" id="carousel-prev" class="carousel-nav-btn" aria-label="Previous slide">‹</button>
-                        <!-- Fallback placeholder schema data for JS Array dynamic mapping binding loops later -->
                         <img id="carousel-main-image" class="carousel-img" src="images/gallery/project1.jpg" alt="Moravian Post-Frame Project Showcase">
                         <button type="button" id="carousel-next" class="carousel-nav-btn" aria-label="Next slide">›</button>
                         
@@ -363,7 +357,6 @@
             </div>
         </section>
 
-        <!-- LIGHTBOX MODAL CONTAINER -->
         <div id="lightbox-modal" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Fullscreen Image Portfolio Viewer Overlay">
             <div class="lightbox-content">
                 <button type="button" id="lightbox-close" class="lightbox-close" aria-label="Close Fullscreen Viewer">×</button>
@@ -373,14 +366,11 @@
             </div>
         </div>
 
-        <!-- MAIN CONFIGURATOR SUBSYSTEM APPLICATION INTERFACE GRID -->
         <section id="configurator" class="configurator" aria-label="Interactive Estimator Workspace">
             <div class="container configurator-grid">
                 
-                <!-- INPUT PARAMETERS ARCHITECTURE INTERFACE PANEL COLUMN (LEFT) -->
                 <aside class="controls" aria-label="Enclosure Property Customization Controllers Drawer">
                     
-                    <!-- 1. DIMENSIONAL SELECTIONS MODULUS DATA CONTAINER CARD -->
                     <div class="card">
                         <h2>1. Core Geometry Envelope</h2>
                         <div class="form-group">
@@ -418,7 +408,6 @@
                         </div>
                     </div>
 
-                    <!-- 2. MATERIALS METALS EXTERIOR COLOR CONFIGURATOR SELECTIONS CARD CONTAINER -->
                     <div class="card">
                         <h2>2. Structural Metal Finishes</h2>
                         <div class="form-group">
@@ -471,7 +460,6 @@
                         </div>
                     </div>
 
-                    <!-- 3. INTERIOR LINING CONFIGURATION FITMENT SPECIFICATIONS EXTENSION MATRIX -->
                     <div class="card">
                         <h2>3. Interior Lining System</h2>
                         <div class="form-group">
@@ -490,7 +478,6 @@
                         </div>
                     </div>
 
-                    <!-- 4. APERTURES INJECTION TOOLBAR MODULE SELECTIONS ACTIONS DRAWER BASE CARD -->
                     <div class="card">
                         <h2>4. Framing Openings Assemblies Injection</h2>
                         <p class="hint" style="font-size: 0.8125rem; color: var(--color-slate-600); margin-bottom: 12px;">Inject component node opening profiles onto the active projection vector grid plane below.</p>
@@ -503,7 +490,6 @@
                         </div>
                     </div>
 
-                    <!-- 5. DYNAMIC MODIFIER ACTIVE ASSEMBLY NODE EDITING DRAWER PROPERTIES FORM PANEL CARD (Revealed Conditionally via App Engine Logic Loops) -->
                     <div id="modifier-card" class="card hidden" style="border-color: var(--color-gold); background-color: rgba(212, 175, 55, 0.02);">
                         <h2>5. Edit Selection Properties <span style="font-size: 0.75rem; background-color: var(--color-gold); color: var(--color-navy); padding: 2px 6px; border-radius: 2px;">Active Node</span></h2>
                         <div class="form-inline-row">
@@ -522,19 +508,16 @@
                         </div>
                     </div>
 
-                    <!-- 6. SPECIAL MANUAL REQUESTS UNDERWRITING DATA INTENDED EXCEEDS CONTAINER FORM MEMO LAYER -->
                     <div class="card">
                         <h2>Special Engineering Notes</h2>
                         <div class="form-group">
-                            <textarea id="param-special" rows="3" placeholder="Enter special field variables here (e.g., custom wind uplift resistance, timber pile footing specs, lean-to structural additions, custom overhead tracks). All numerical calculator matrices ignore this comment data layer automatically; an expert underwriting coordinator reviews it during manual estimate file packaging workflows."></textarea>
+                            <textarea id="param-special" rows="3" placeholder="Enter special field variables here..."></textarea>
                         </div>
                     </div>
                 </aside>
 
-                <!-- INTERACTIVE VECTOR BLUEPRINT PROJECTION GRAPHICAL WORKING WORKSPACE DASHBOARD LAYER COLUMN (RIGHT) -->
                 <div class="viewer-column">
                     
-                    <!-- SVG DISPLAY ENCLOSURE DRAWER FRAMEWORK WORKSPACE DASHBOARD TARGET CARD BLOCK -->
                     <div class="viewer-card">
                         <div class="viewer-header">
                             <div class="viewer-meta">
@@ -549,34 +532,19 @@
                             </div>
                         </div>
 
-                        <!-- 2D VECTOR GRAPHICAL PLATFORM DRAWING ENVELOPE BASE LAYER CANVAS COMPONENT VIEWPORT -->
                         <div class="viewer-canvas-container">
                             <svg id="building-svg" class="viewer-svg" viewBox="0 0 800 500" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-                                <!-- PIPELINE LAYER STACK MATRIX SCHEMA BLUEPRINTS FOR COPILOT INTERACTION BINDINGS PLACEMENTS -->
-                                <g id="svg-grid-layer" class="grid-layer">
-                                    <!-- Dynamic framework backdrop structural marker tracks elements injected programmatically by viewer engine loops -->
-                                    <line x1="50" y1="50" x2="750" y2="50" class="grid-line-major" />
-                                    <line x1="50" y1="420" x2="750" y2="420" class="grid-line-major" />
-                                </g>
+                                <g id="svg-grid-layer" class="grid-layer"></g>
                                 <g id="svg-envelope-layer" class="envelope-layer">
-                                    <!-- Structural Envelope Primitives Layer Placeholder Elements -->
-                                    <polygon id="svg-roof" class="roof-poly" points="50,150 400,50 750,150" />
-                                    <rect id="svg-wall" class="wall-rect" x="50" y="150" width="700" height="270" />
-                                    <rect id="svg-wainscot" class="wainscot-rect hidden" x="50" y="360" width="700" height="60" />
+                                    <polygon id="svg-roof" class="roof-poly hidden" />
+                                    <rect id="svg-wall" class="wall-rect" />
+                                    <rect id="svg-wainscot" class="wainscot-rect hidden" />
                                 </g>
-                                <g id="svg-openings-layer" class="openings-layer">
-                                    <!-- Dynamic structural aperture instances nodes tracking rect components injected inside pool mapping arrays loops later -->
-                                </g>
-                                <g id="svg-selection-layer" class="selection-layer">
-                                    <!-- Selected active element vector outlines bounds highlighters node tracks indicators paths layer -->
-                                </g>
+                                <g id="svg-openings-layer" class="openings-layer"></g>
+                                <g id="svg-selection-layer" class="selection-layer"></g>
                                 <g id="svg-dimensions-layer" class="dimensions-layer">
-                                    <!-- Direct Dimension Callouts Vector Strings Text Labels Paths Elements Layer Structure Base -->
-                                    <line x1="50" y1="445" x2="750" y2="445" stroke="#94A3B8" stroke-width="1.5" />
-                                    <text id="svg-dim-width-text" x="400" y="465" class="dim-text">30 ft (Building Frame Width Line Boundary)</text>
-                                    
-                                    <line x1="25" y1="150" x2="25" y2="420" stroke="#94A3B8" stroke-width="1.5" />
-                                    <text id="svg-dim-height-text" x="15" y="285" class="dim-text" transform="rotate(-90 15 285)">14 ft Eave Structural Boundary Line</text>
+                                    <text id="svg-dim-width-text" y="465" class="dim-text"></text>
+                                    <text id="svg-dim-height-text" x="15" class="dim-text" transform="rotate(-90 15 285)"></text>
                                 </g>
                             </svg>
                         </div>
@@ -587,20 +555,11 @@
                         </div>
                     </div>
 
-                    <!-- REALTIME DYNAMIC INTERACTIVE CONFIGURATION SUMMARY FINANCIAL COST VALUE ESTIMATE STATEMENTS SCOREBOARD BLOCK CONTAINER -->
                     <article class="summary" aria-label="Current Custom Specification Estimate Statement Summary Card Ledger Dashboard">
                         <div class="summary-grid">
                             <div class="summary-details">
                                 <h4>Current Configuration Baseline Summary</h4>
-                                <ul id="summary-spec-list" class="summary-spec-list">
-                                    <!-- Data instances tracking parameter values items string outputs mapping directly inside target list layout loops nodes -->
-                                    <li><span>Main Shell footprint Size Dimensions Matrix:</span><span>30ft Width &times; 40ft Length &times; 14ft Eave Height</span></li>
-                                    <li><span>Structural Footprint Surface Total Area Profile:</span><span>1,200 Square Feet Ground Footprint Area</span></li>
-                                    <li><span>Roof Metal Panel Siding Finish Sheathing Coating Color:</span><span>Charcoal Slate Gray Metallic Coating Finish</span></li>
-                                    <li><span>Wall Cladding Structural Shell Steel Coating Profile Color:</span><span>Ash Medium Siding Gray Coating Plate Finish</span></li>
-                                    <li><span>Trim Edge Flashing Assembly Component Border Profiles Color:</span><span>Midnight Charcoal Dark Trim Accent Trim Coating</span></li>
-                                    <li><span>Apertures Assembly Structural Openings Count Array Log:</span><span>0 Active Component Assemblies Inserted</span></li>
-                                </ul>
+                                <ul id="summary-spec-list" class="summary-spec-list"></ul>
                             </div>
                             <div class="summary-pricing">
                                 <span class="price-lbl">Estimated Baseline Price</span>
@@ -615,12 +574,11 @@
             </div>
         </section>
 
-        <!-- LEAD CAPTURE SYSTEM WORKFLOW INTEGRATION CUSTOMER DATA REGISTRATION PROPOSALS INTAKE SECTION PORTAL -->
         <section id="contact" class="contact" aria-labelledby="contact-heading">
             <div class="container contact-container">
                 <div class="contact-sidebar">
                     <h2 id="contact-heading">Request Formal Engineering Underwriting Proposal File</h2>
-                    <p>Your dimensional inputs metrics, exterior color choices configurations listings arrays trackers, and custom door/window geometric spatial positioning coordinates indexes tracking vectors data lists are compiled securely. A certified engineering drafting lead from our family-run regional headquarters operations team validates tracking variables loops manually against structural load rule logs directly to outline project timeline execution schedules fields.</p>
+                    <p>Your dimensional inputs metrics, exterior color choices configurations listings arrays trackers, and custom door/window geometric spatial positioning coordinates indexes tracking vectors data lists are compiled securely.</p>
                     <ul class="bullets">
                         <li><span class="check-icon">✓</span> <span>Automated data blueprint synchronization transfer pipelines routing maps straight to drafting terminal machines layout suites logs.</span></li>
                         <li><span class="check-icon">✓</span> <span>Localized regional ground snow thresholds threshold limits matching analysis calculations, wind displacement payload envelope rating parameters tracking validation check lines.</span></li>
@@ -628,7 +586,6 @@
                     </ul>
                 </div>
 
-                <!-- LEAD INTAKE INGESTION CLIENT CAPTURE DATA CONTAINER SUBMISSION FORM APPLICATION COMPONENT SYSTEM -->
                 <form id="lead-form" class="contact-form" autocomplete="on" novalidate>
                     <div class="form-stack">
                         <div class="form-group">
@@ -656,7 +613,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="lead-state">Building Site Construction State Location Jurisdiction</label>
-                                <input type="text" id="lead-state" name="state" required placeholder="ND">
+                                <input type="text" id="lead-state" name="state" required placeholder="ND" maxlength="2">
                                 <span id="err-state" class="field-error" role="alert"></span>
                             </div>
                         </div>
@@ -668,7 +625,6 @@
 
     </main>
 
-    <!-- SYSTEM STANDARD FOOTER PLATFORM BRANDING COMPONENT PANEL BLOCK MODULE -->
     <footer class="footer" role="contentinfo">
         <div class="container footer-container">
             <div class="footer-brand">
@@ -700,7 +656,6 @@
         </div>
     </footer>
 
-    <!-- MOBILE THUMB ZONE STICKY ACTIONS ACTION STRIP BAR FOOTER DRAWER WIDGET LAYER (Responsive optimization target context for viewports under 600px like iPhone 390px models layout metrics profiles) -->
     <div id="mobile-sticky-bar" class="mobile-action-bar" aria-hidden="true">
         <div class="mobile-bar-container">
             <div class="mobile-bar-price">
@@ -711,5 +666,6 @@
         </div>
     </div>
 
+    <script type="module" src="app.js"></script>
 </body>
 </html>
