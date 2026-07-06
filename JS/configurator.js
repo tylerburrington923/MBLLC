@@ -1,117 +1,168 @@
-/**
- * Moravian Builders LLC - Configuration & Core Layout State Engine
- */
-export class PostFrameConfigurator {
-    constructor() {
-        this.state = {
-            width: 30,
-            length: 40,
-            height: 14,
-            roofColor: '#334155',
-            wallColor: '#475569',
-            trimColor: '#1E293B',
-            hasWainscot: false,
-            wainscotColor: '#1E293B',
-            overhang: 12,
-            hasInteriorLiner: false,
-            interiorColor: '#F8FAFC',
-            activeFace: 'front', // 'front', 'rear', 'left', 'right'
-            openings: [], // Arrays of injected component structural nodes
-            selectedNodeId: null
-        };
+import { BuildingState } from './state.js';
+import { RuleContext } from './utils.js';
 
-        // Standard Pricing Matrices
-        this.basePricePerSqFt = 25; // Base framing lumber + labor index
-        this.heightSurchargePerFt = 1200; 
-        this.wainscotCostPerLinearFt = 18;
-        this.interiorLinerCostPerSqFt = 8;
-        
-        this.openingCosts = {
-            overhead: 1250,
-            bifold: 3200,
-            slider: 950,
-            walk_door: 450,
-            window: 250
-        };
+export class Configurator {
+  constructor(initialData = {}) {
+    this.state = new BuildingState(initialData);
+    this.pricingEngine = null;
+    this.listeners = new Set();
+    this.ruleContext = RuleContext;
+  }
+
+  registerPricingEngine(engine) {
+    this.pricingEngine = engine;
+    this.evaluatePricing();
+  }
+
+  evaluatePricing() {
+    if (!this.pricingEngine) return;
+    this.state.pricing = this.pricingEngine(this.state);
+    this.notify('pricing:updated', this.state.pricing);
+  }
+
+  setActiveFace(faceId) {
+    if (!this.state.walls[faceId]) return;
+    this.state.activeFace = faceId;
+    this.notify('state:updated', this.state);
+  }
+
+  updateEnvelopeProperties(properties = {}) {
+    let dimensionsChanged = false;
+    const nextWidth = properties.width !== undefined ? Number(properties.width) : this.state.width;
+    const nextLength = properties.length !== undefined ? Number(properties.length) : this.state.length;
+    const nextHeight = properties.height !== undefined ? Number(properties.height) : this.state.height;
+
+    if (nextWidth !== this.state.width || nextLength !== this.state.length || nextHeight !== this.state.height) {
+      dimensionsChanged = true;
     }
 
-    updateParameter(key, value) {
-        if (value === 'true') value = true;
-        if (value === 'false') value = false;
-        if (!isNaN(value) && typeof value !== 'boolean' && String(value).trim() !== '' && !String(value).startsWith('#')) {
-            value = Number(value);
+    if (dimensionsChanged) {
+      this.state.updateDimensions(nextWidth, nextLength, nextHeight, this.ruleContext);
+    }
+
+    if (properties.roofColor !== undefined) this.state.roofColor = properties.roofColor;
+    if (properties.wallColor !== undefined) this.state.wallColor = properties.wallColor;
+    if (properties.trimColor !== undefined) this.state.trimColor = properties.trimColor;
+    if (properties.wainscot !== undefined) this.state.wainscot = !!properties.wainscot;
+    if (properties.wainscotColor !== undefined) this.state.wainscotColor = properties.wainscotColor;
+    if (properties.interiorLiner !== undefined) this.state.interiorLiner = !!properties.interiorLiner;
+    if (properties.interiorColor !== undefined) this.state.interiorColor = properties.interiorColor;
+    if (properties.overhang !== undefined) this.state.overhang = Number(properties.overhang);
+    if (properties.specialNotes !== undefined) this.state.specialNotes = properties.specialNotes;
+
+    this.evaluatePricing();
+    this.notify('state:updated', this.state);
+  }
+
+  addOpeningToActiveWall(openingData) {
+    const faceId = this.state.activeFace;
+    const wall = this.state.walls[faceId];
+    if (!wall) return null;
+
+    // Default position to physical center of the wall if not specified
+    if (openingData.position === undefined) {
+      openingData.position = wall.length / 2;
+    }
+
+    // Explicitly deselect existing selections on this wall line
+    wall.openings.forEach(op => op.deselect());
+
+    const op = wall.addOpening(openingData, this.ruleContext);
+    if (op) {
+      op.select();
+      this.evaluatePricing();
+      this.notify('opening:added', { wallId: faceId, opening: op });
+    } else {
+      this.notify('error:action_rejected', { message: 'Placement constraints or space overlap conflict.' });
+    }
+    return op;
+  }
+
+  moveOpeningInActiveWall(openingId, requestedPosition) {
+    const faceId = this.state.activeFace;
+    const wall = this.state.walls[faceId];
+    if (!wall) return false;
+
+    const success = wall.moveOpening(openingId, requestedPosition, this.ruleContext);
+    if (success) {
+      this.evaluatePricing();
+      this.notify('opening:moved', { wallId: faceId, openingId, position: wall.getOpening(openingId).position });
+    }
+    return success;
+  }
+
+  removeOpeningFromActiveWall(openingId) {
+    const faceId = this.state.activeFace;
+    const wall = this.state.walls[faceId];
+    if (!wall) return false;
+
+    const success = wall.removeOpening(openingId);
+    if (success) {
+      this.evaluatePricing();
+      this.notify('opening:removed', { wallId: faceId, openingId });
+    }
+    return success;
+  }
+
+  updateOpeningProperties(openingId, properties = {}) {
+    const faceId = this.state.activeFace;
+    const wall = this.state.walls[faceId];
+    if (!wall) return false;
+
+    const opening = wall.getOpening(openingId);
+    if (!opening || opening.locked) return false;
+
+    // Transactional structural geometry mutation safety validation check
+    const originalWidth = opening.width;
+    const originalHeight = opening.height;
+    const originalPosition = opening.position;
+
+    if (properties.width !== undefined) opening.width = Number(properties.width);
+    if (properties.height !== undefined) opening.height = Number(properties.height);
+
+    const validatedPos = wall._resolveValidPosition(opening.position, opening.width, openingId, this.ruleContext);
+
+    if (validatedPos !== null) {
+      opening.position = validatedPos;
+      this.evaluatePricing();
+      this.notify('state:updated', this.state);
+      return true;
+    } else {
+      // Revert if mutation breaches geometry bounds
+      opening.width = originalWidth;
+      opening.height = originalHeight;
+      opening.position = originalPosition;
+      this.notify('error:action_rejected', { message: 'Sizing adjustment violates boundary or minimum overlap limits.' });
+      return false;
+    }
+  }
+
+  selectOpening(openingId) {
+    Object.values(this.state.walls).forEach(wall => {
+      wall.openings.forEach(op => {
+        if (op.id === openingId) {
+          op.select();
+        } else {
+          op.deselect();
         }
-        this.state[key] = value;
-        return this.calculateEstimate();
-    }
+      });
+    });
+    this.notify('state:updated', this.state);
+  }
 
-    calculateEstimate() {
-        const sqFt = this.state.width * this.state.length;
-        let total = sqFt * this.basePricePerSqFt;
+  clearSelection() {
+    Object.values(this.state.walls).forEach(wall => {
+      wall.openings.forEach(op => op.deselect());
+    });
+    this.notify('state:updated', this.state);
+  }
 
-        // Height scale addition
-        if (this.state.height > 10) {
-            total += (this.state.height - 10) * this.heightSurchargePerFt;
-        }
+  subscribe(listener) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
 
-        // Wainscot perimeter calculations
-        if (this.state.hasWainscot) {
-            const perimeter = (this.state.width * 2) + (this.state.length * 2);
-            total += perimeter * this.wainscotCostPerLinearFt;
-        }
-
-        // Internal lining structural area payload
-        if (this.state.hasInteriorLiner) {
-            const wallArea = ((this.state.width * 2) + (this.state.length * 2)) * this.state.height;
-            total += wallArea * this.interiorLinerCostPerSqFt;
-        }
-
-        // Apertures count pricing lookup mapping loop
-        this.state.openings.forEach(op => {
-            total += this.openingCosts[op.type] || 0;
-            // Scale multiplier based on custom surface sizing
-            const baseArea = 32; // 4x8 reference node area
-            const currentArea = op.width * op.height;
-            if (currentArea > baseArea) {
-                total += (currentArea - baseArea) * 15;
-            }
-        });
-
-        return total;
-    }
-
-    injectOpening(type) {
-        const id = 'node_' + Date.now();
-        
-        // Dynamic default sizes matching standardized structural styles
-        let w = 4, h = 4;
-        if (type === 'overhead') { w = 10; h = 10; }
-        else if (type === 'bifold') { w = 24; h = 14; }
-        else if (type === 'slider') { w = 12; h = 12; }
-        else if (type === 'walk_door') { w = 3; h = 7; }
-
-        const newNode = {
-            id,
-            type,
-            width: w,
-            height: h,
-            face: this.state.activeFace,
-            xPercent: 40, // Base placement alignment starting coordinate offset
-            yPercent: 0   // Snapped to structural finish grade floor baseline
-        };
-
-        this.state.openings.push(newNode);
-        this.state.selectedNodeId = id;
-        return newNode;
-    }
-
-    getSVGCoords(event, svgElement) {
-        const point = svgElement.createSVGPoint();
-        point.x = event.clientX;
-        point.y = event.clientY;
-        // Matrix conversion addressing small viewport fluid coordinates scaling
-        const transformations = svgElement.getScreenCTM().inverse();
-        return point.matrixTransform(transformations);
-    }
+  notify(type, payload) {
+    this.listeners.forEach(listener => listener({ type, payload, state: this.state }));
+  }
 }
- 
