@@ -11,6 +11,7 @@ import { viewer } from './viewer.js';
 import { pricing } from './pricing.js';
 import { gallery } from './gallery.js';
 import { form } from './form.js';
+import { configurator } from './configurator.js';
 
 /**
  * Initialize application when DOM is ready
@@ -39,6 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
         form.init();
         console.log('✓ Form initialized');
 
+        bindEnvelopeSelectors();
+        syncFormToState();
+
         // Pipeline Sequence Step 3: Trigger global lifecycle first pass data drawing loop orchestration matrices
         // Initial render of all visual elements based on default state
         pricing.calculate();
@@ -56,6 +60,74 @@ document.addEventListener('DOMContentLoaded', () => {
         displayErrorMessage('Application failed to initialize. Please refresh the page.');
     }
 });
+
+function bindEnvelopeSelectors() {
+    const widthSelect = document.getElementById('param-width');
+    const lengthSelect = document.getElementById('param-length');
+    const overhangSelect = document.getElementById('param-overhang');
+
+    if (widthSelect) {
+        widthSelect.addEventListener('change', (event) => {
+            configurator.updateEnvelopeProperties({ width: event.target.value });
+            syncFormToState();
+            pricing.calculate();
+            viewer.renderPipeline();
+        });
+    }
+
+    if (lengthSelect) {
+        lengthSelect.addEventListener('change', (event) => {
+            configurator.updateEnvelopeProperties({ length: event.target.value });
+            syncFormToState();
+            pricing.calculate();
+            viewer.renderPipeline();
+        });
+    }
+
+    if (overhangSelect) {
+        overhangSelect.addEventListener('change', (event) => {
+            configurator.updateEnvelopeProperties({ overhang: event.target.value });
+            syncFormToState();
+            pricing.calculate();
+            viewer.renderPipeline();
+        });
+    }
+}
+
+function setSelectWithFallback(selectElement, preferredValue, fallbackValue) {
+    if (!selectElement) {
+        return;
+    }
+
+    const preferred = String(preferredValue);
+    const fallback = String(fallbackValue);
+    const hasPreferred = Array.from(selectElement.options).some((option) => option.value === preferred);
+    const hasFallback = Array.from(selectElement.options).some((option) => option.value === fallback);
+
+    if (hasPreferred) {
+        selectElement.value = preferred;
+    } else if (hasFallback) {
+        selectElement.value = fallback;
+    } else if (selectElement.options.length > 0) {
+        selectElement.selectedIndex = 0;
+    }
+}
+
+function syncFormToState() {
+    const widthSelect = document.getElementById('param-width');
+    const lengthSelect = document.getElementById('param-length');
+    const overhangSelect = document.getElementById('param-overhang');
+
+    setSelectWithFallback(widthSelect, state.getBuilding('width'), '40');
+    setSelectWithFallback(lengthSelect, state.getBuilding('length'), '40');
+    setSelectWithFallback(overhangSelect, state.getBuilding('overhang'), '12');
+
+    configurator.updateEnvelopeProperties({
+        width: widthSelect?.value ?? '40',
+        length: lengthSelect?.value ?? '40',
+        overhang: overhangSelect?.value ?? '12'
+    });
+}
 
 /**
  * Display error message to user
@@ -76,6 +148,10 @@ function displayErrorMessage(message) {
  * Logs significant state mutations to console in development
  */
 document.addEventListener('app:state-change', (e) => {
+    if (e.detail.category === 'building') {
+        syncFormToState();
+    }
+
     if (process.env.NODE_ENV === 'development') {
         console.log('📊 State updated:', e.detail.path, '=', e.detail.value);
     }

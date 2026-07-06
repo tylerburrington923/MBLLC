@@ -77,16 +77,16 @@ const constants = {
 
     dimensions: {
         width: {
-            min: 20,
-            max: 100,
-            step: 2,
+            min: 40,
+            max: 90,
+            step: 10,
             unit: 'ft',
             label: 'Width'
         },
         length: {
-            min: 30,
-            max: 150,
-            step: 2,
+            min: 40,
+            max: 256,
+            step: 8,
             unit: 'ft',
             label: 'Length'
         },
@@ -98,9 +98,9 @@ const constants = {
             label: 'Eave Height'
         },
         overhang: {
-            min: 0,
+            min: 12,
             max: 24,
-            step: 1,
+            step: 6,
             unit: 'in',
             label: 'Overhang'
         }

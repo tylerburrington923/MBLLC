@@ -6,6 +6,12 @@
 
 import { constants } from './constants.js';
 
+const ALLOWED_WIDTHS = [40, 50, 60, 70, 80, 90];
+const LENGTH_MIN = 40;
+const LENGTH_MAX = 256;
+const LENGTH_STEP = 8;
+const ALLOWED_OVERHANGS = [12, 18, 24];
+
 /**
  * Reactive State Manager
  * Maintains immutable state and dispatches change events
@@ -42,7 +48,7 @@ const state = {
         return {
             // Dimensions
             width: 40,
-            length: 60,
+            length: 40,
             height: 14,
             roofPitch: '4:12',
             overhang: 12,
@@ -85,9 +91,11 @@ const state = {
      * @param {*} value - New value
      */
     setBuilding(key, value) {
-        if (this.building[key] !== value) {
-            this.building[key] = value;
-            this.dispatchChange('building', key, value);
+        const { normalizedKey, normalizedValue } = this.normalizeBuildingValue(key, value);
+
+        if (this.building[normalizedKey] !== normalizedValue) {
+            this.building[normalizedKey] = normalizedValue;
+            this.dispatchChange('building', normalizedKey, normalizedValue);
             this.saveToStorage();
         }
     },
@@ -99,9 +107,10 @@ const state = {
      */
     setBuildingBatch(updates) {
         let hasChanges = false;
-        for (const [key, value] of Object.entries(updates)) {
-            if (this.building[key] !== value) {
-                this.building[key] = value;
+        for (const [key, value] of Object.entries(updates || {})) {
+            const { normalizedKey, normalizedValue } = this.normalizeBuildingValue(key, value);
+            if (this.building[normalizedKey] !== normalizedValue) {
+                this.building[normalizedKey] = normalizedValue;
                 hasChanges = true;
             }
         }
@@ -117,7 +126,109 @@ const state = {
      * @returns {*} Property value
      */
     getBuilding(key) {
+        if (key === 'eave') {
+            return this.building.overhang;
+        }
         return this.building[key];
+    },
+
+    normalizeWidth(value) {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed)) {
+            return 40;
+        }
+
+        let nearest = ALLOWED_WIDTHS[0];
+        let minDistance = Math.abs(parsed - nearest);
+
+        for (let i = 1; i < ALLOWED_WIDTHS.length; i++) {
+            const candidate = ALLOWED_WIDTHS[i];
+            const distance = Math.abs(parsed - candidate);
+            if (distance < minDistance) {
+                nearest = candidate;
+                minDistance = distance;
+            }
+        }
+
+        return nearest;
+    },
+
+    normalizeLength(value) {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed)) {
+            return 40;
+        }
+
+        const clamped = Math.min(LENGTH_MAX, Math.max(LENGTH_MIN, parsed));
+        const snapped = LENGTH_MIN + (Math.round((clamped - LENGTH_MIN) / LENGTH_STEP) * LENGTH_STEP);
+        return Math.min(LENGTH_MAX, Math.max(LENGTH_MIN, snapped));
+    },
+
+    normalizeOverhang(value) {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed)) {
+            return 12;
+        }
+        if (parsed === 0) {
+            return 12;
+        }
+        return ALLOWED_OVERHANGS.includes(parsed) ? parsed : 12;
+    },
+
+    normalizeBuildingValue(key, value) {
+        let normalizedKey = key;
+        let normalizedValue = value;
+
+        if (normalizedKey === 'eave') {
+            normalizedKey = 'overhang';
+        }
+
+        if (normalizedKey === 'width') {
+            normalizedValue = this.normalizeWidth(value);
+        } else if (normalizedKey === 'length') {
+            normalizedValue = this.normalizeLength(value);
+        } else if (normalizedKey === 'overhang') {
+            normalizedValue = this.normalizeOverhang(value);
+        }
+
+        return { normalizedKey, normalizedValue };
+    },
+
+    normalizeBuildingConfig(building = {}) {
+        const normalized = { ...building };
+        if (normalized.overhang == null && normalized.eave != null) {
+            normalized.overhang = normalized.eave;
+        }
+        delete normalized.eave;
+
+        normalized.width = this.normalizeWidth(normalized.width);
+        normalized.length = this.normalizeLength(normalized.length);
+        normalized.overhang = this.normalizeOverhang(normalized.overhang);
+
+        if (!Array.isArray(normalized.openings)) {
+            normalized.openings = [];
+        }
+
+        return normalized;
+    },
+
+    updateDimensions(updates = {}) {
+        const normalizedUpdates = {};
+        if (updates.width !== undefined) {
+            normalizedUpdates.width = this.normalizeWidth(updates.width);
+        }
+        if (updates.length !== undefined) {
+            normalizedUpdates.length = this.normalizeLength(updates.length);
+        }
+        if (updates.overhang !== undefined || updates.eave !== undefined) {
+            normalizedUpdates.overhang = this.normalizeOverhang(
+                updates.overhang !== undefined ? updates.overhang : updates.eave
+            );
+        }
+
+        if (Object.keys(normalizedUpdates).length > 0) {
+            this.setBuildingBatch(normalizedUpdates);
+        }
     },
 
     /**
@@ -294,7 +405,8 @@ const state = {
                 const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
                 
                 if (ageMs < sevenDaysMs) {
-                    this.building = { ...this.getDefaults(), ...stateSnapshot.building };
+                    const mergedBuilding = { ...this.getDefaults(), ...stateSnapshot.building };
+                    this.building = this.normalizeBuildingConfig(mergedBuilding);
                     this.lead = { ...this.getLeadDefaults(), ...stateSnapshot.lead };
                     console.log('State restored from localStorage');
                 } else {
@@ -349,7 +461,8 @@ const state = {
      */
     import(config) {
         if (config && config.building) {
-            this.building = { ...this.getDefaults(), ...config.building };
+            const mergedBuilding = { ...this.getDefaults(), ...config.building };
+            this.building = this.normalizeBuildingConfig(mergedBuilding);
             this.lead = { ...this.getLeadDefaults(), ...(config.lead || {}) };
             this.saveToStorage();
             this.dispatchChange('app', 'import', config);
