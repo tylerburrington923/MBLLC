@@ -1,254 +1,355 @@
-import { PostFrameConfigurator } from './configurator.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-    const core = new PostFrameConfigurator();
-    
-    // DOM Elements Cache Mapping 
-    const svg = document.getElementById('building-svg');
-    const svgWall = document.getElementById('svg-wall');
-    const svgRoof = document.getElementById('svg-roof');
-    const svgWainscot = document.getElementById('svg-wainscot');
-    const openingsLayer = document.getElementById('svg-openings-layer');
-    const priceBadge = document.getElementById('price-badge');
-    const mobilePriceBadge = document.getElementById('mobile-price-badge');
-    
-    // Modification panel selectors
-    const modifierCard = document.getElementById('modifier-card');
-    const modWidthInput = document.getElementById('mod-width');
-    const modHeightInput = document.getElementById('mod-height');
+import { Configurator } from './configurator.js';
+import { Renderer } from './renderer.js';
+import { DragDropEngine } from './dragDrop.js';
+import { calculateBuildingPricing } from './pricing.js';
+import { calculateMaterialEstimates } from './materials.js';
+import { GalleryModule } from './gallery.js';
+import { ApiModule } from './api.js';
 
-    let draggedElement = null;
+class App {
+  constructor() {
+    this.configurator = new Configurator();
+    this.configurator.registerPricingEngine(calculateBuildingPricing);
 
-    function renderWorkspace() {
-        // 1. Setup Shell Proportions Framework
-        // Base viewport bounds: Left margin=50, Right margin=750 (Total width span=700)
-        // Floor line fixed baseline boundary coordinate index = 420
-        const canvasWidthSpan = 700;
-        const baseFloorY = 420;
-        
-        // Scale height linearly (e.g., 14ft height maps cleanly inside canvas bounds)
-        const pixelsPerFootY = 15; 
-        const wallHeightPixels = core.state.height * pixelsPerFootY;
-        const wallTopY = baseFloorY - wallHeightPixels;
+    this.cacheDOM();
+    this.initModules();
+    this.initEvents();
+    this.syncFormToState();
 
-        svgWall.setAttribute('y', wallTopY);
-        svgWall.setAttribute('height', wallHeightPixels);
-        svgWall.setAttribute('fill', core.state.wallColor);
+    // Trigger initial visual refresh rendering cycles
+    this.handleStateUpdate();
+  }
 
-        // 2. Structural Roof Geometry Truss Vector Paths Points Array
-        const ridgeX = 400; // Center peak profile alignment track
-        const roofPeakY = wallTopY - 60; // 4:12 standard fixed offset pitch projection
-        svgRoof.setAttribute('points', `50,${wallTopY} ${ridgeX},${roofPeakY} 750,${wallTopY}`);
-        svgRoof.setAttribute('fill', core.state.roofColor);
+  cacheDOM() {
+    // Structural Parameter Triggers
+    this.paramWidth = document.getElementById('param-width');
+    this.paramLength = document.getElementById('param-length');
+    this.paramHeight = document.getElementById('param-height');
+    this.paramOverhang = document.getElementById('param-overhang');
+    this.paramSpecial = document.getElementById('param-special');
 
-        // 3. Wainscot Assembly Strip Installation
-        if (core.state.hasWainscot) {
-            svgWainscot.classList.remove('hidden');
-            const wainscotHeightPixels = 3 * pixelsPerFootY; // Fixed 3ft lower accent line
-            svgWainscot.setAttribute('y', baseFloorY - wainscotHeightPixels);
-            svgWainscot.setAttribute('height', wainscotHeightPixels);
-            svgWainscot.setAttribute('fill', core.state.wainscotColor);
-        } else {
-            svgWainscot.classList.add('hidden');
-        }
+    // Color Swatch Matrix Targets
+    this.swatchesRoof = document.getElementById('swatches-roof');
+    this.swatchesWall = document.getElementById('swatches-wall');
+    this.swatchesTrim = document.getElementById('swatches-trim');
+    this.swatchesWainscot = document.getElementById('swatches-wainscot');
+    this.swatchesInterior = document.getElementById('swatches-interior');
 
-        // 4. Labels and Dimensions Overlay Setup
-        document.getElementById('svg-dim-width-text').textContent = `${core.state.width} ft (Building Frame Width Line)`;
-        document.getElementById('svg-dim-height-text').textContent = `${core.state.height} ft Eave Structural Line`;
+    // Wainscot & Interior Visibility Triggers
+    this.toggleWainscot = document.getElementById('toggle-wainscot');
+    this.wainscotColorContainer = document.getElementById('wainscot-color-container');
+    this.toggleInterior = document.getElementById('toggle-interior');
+    this.interiorColorContainer = document.getElementById('interior-color-container');
 
-        // 5. Render Openings Node Array Log Loop
-        openingsLayer.innerHTML = '';
-        const activeFaceOpenings = core.state.openings.filter(op => op.face === core.state.activeFace);
+    // Dynamic Projection View Tabs
+    this.viewTabs = document.getElementById('view-tabs');
+    this.viewerTitle = document.getElementById('viewer-title');
 
-        activeFaceOpenings.forEach(op => {
-            const nodeW = (op.width / core.state.width) * canvasWidthSpan;
-            const nodeH = op.height * pixelsPerFootY;
-            const nodeX = 50 + ((op.xPercent / 100) * canvasWidthSpan);
-            // Lock components flat to ground surface line natively
-            const nodeY = baseFloorY - nodeH; 
+    // Component Injection Controls
+    this.injectorGrid = document.querySelector('.injector-grid');
 
-            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            rect.setAttribute('id', op.id);
-            rect.setAttribute('x', nodeX);
-            rect.setAttribute('y', nodeY);
-            rect.setAttribute('width', nodeW);
-            rect.setAttribute('height', nodeH);
-            rect.setAttribute('class', `opening-rect ${core.state.selectedNodeId === op.id ? 'selected' : ''}`);
-            
-            // Text color coding inside component nodes matching styling blocks definitions
-            if (op.type === 'window') rect.style.fill = '#93C5FD'; 
-            else if (op.type === 'walk_door') rect.style.fill = '#D1D5DB';
-            else rect.style.fill = '#E2E8F0';
+    // Node Modifier Drawer Form Block
+    this.modifierCard = document.getElementById('modifier-card');
+    this.modWidth = document.getElementById('mod-width');
+    this.modHeight = document.getElementById('mod-height');
+    this.btnDuplicate = document.getElementById('btn-duplicate');
+    this.btnDelete = document.getElementById('btn-delete');
 
-            // Attach drag interaction sequences directly to the nodes
-            rect.addEventListener('mousedown', (e) => startDrag(e, op));
-            rect.addEventListener('touchstart', (e) => startDrag(e, op), { passive: false });
+    // Display Badges and Ledger Layout Panels
+    this.priceBadge = document.getElementById('price-badge');
+    this.mobilePriceBadge = document.getElementById('mobile-price-badge');
+    this.summarySpecList = document.getElementById('summary-spec-list');
 
-            openingsLayer.appendChild(rect);
-        });
+    // Lead Capture Form Terminal
+    this.leadForm = document.getElementById('lead-form');
+    this.btnSubmitLead = document.getElementById('btn-submit-lead');
 
-        // Update Global Pricing Output Displays
-        const currentCost = core.calculateEstimate();
-        const localizedCostString = `$${currentCost.toLocaleString()}`;
-        priceBadge.textContent = localizedCostString;
-        mobilePriceBadge.textContent = localizedCostString;
+    // Global SVG Architecture Elements
+    this.svgElement = document.getElementById('building-svg');
+  }
 
-        // Toggle editing panel drawer visibility targets context mapping
-        const selectedNode = core.state.openings.find(op => op.id === core.state.selectedNodeId);
-        if (selectedNode) {
-            modifierCard.classList.remove('hidden');
-            modWidthInput.value = selectedNode.width;
-            modHeightInput.value = selectedNode.height;
-        } else {
-            modifierCard.classList.add('hidden');
-        }
+  initModules() {
+    this.renderer = new Renderer(this.svgElement);
+    this.dragDrop = new DragDropEngine(this.svgElement, this.configurator, this.renderer);
+    this.gallery = new GalleryModule();
+
+    // Establish direct state lifecycle monitoring pipelines
+    this.configurator.subscribe(({ type, state }) => {
+      if (type.startsWith('error:')) {
+        alert(state.message || "An architectural layout error occurred.");
+        return;
+      }
+      this.handleStateUpdate();
+    });
+  }
+
+  initEvents() {
+    // Core Geometry Structural Selectors Change Triggers
+    const envelopeSelects = [this.paramWidth, this.paramLength, this.paramHeight, this.paramOverhang];
+    envelopeSelects.forEach(select => {
+      if (select) {
+        select.addEventListener('change', () => this.updateEnvelopeFromUI());
+      }
+    });
+
+    if (this.paramSpecial) {
+      this.paramSpecial.addEventListener('input', () => {
+        this.configurator.updateEnvelopeProperties({ specialNotes: this.paramSpecial.value });
+      });
     }
 
-    // Interactive Drag Mechanics Handlers Block
-    function startDrag(e, op) {
-        e.preventDefault();
-        core.state.selectedNodeId = op.id;
-        draggedElement = op;
-        renderWorkspace();
+    // Swatch Matrix Selector Delegators
+    this.setupSwatchGroup(this.swatchesRoof, 'roofColor');
+    this.setupSwatchGroup(this.swatchesWall, 'wallColor');
+    this.setupSwatchGroup(this.swatchesTrim, 'trimColor');
+    this.setupSwatchGroup(this.swatchesWainscot, 'wainscotColor');
+    this.setupSwatchGroup(this.swatchesInterior, 'interiorColor');
 
-        const moveEvent = e.type === 'touchstart' ? 'touchmove' : 'mousemove';
-        const endEvent = e.type === 'touchstart' ? 'touchend' : 'mouseup';
-
-        const handleMove = (moveEvt) => {
-            if (!draggedElement) return;
-            const clientX = moveEvt.type === 'touchmove' ? moveEvt.touches[0].clientX : moveEvt.clientX;
-            
-            const coords = core.getSVGCoords({ clientX }, svg);
-            const canvasX = coords.x - 50; // Align coordinate with building boundary track
-            let xPercent = (canvasX / 700) * 100;
-
-            // 4ft Structural Lock Grid Snapping Alignment Mechanics
-            const totalFeet = core.state.width;
-            const currentFootPosition = (xPercent / 100) * totalFeet;
-            const snappedFoot = Math.round(currentFootPosition / 4) * 4;
-            
-            // Constrain within building boundaries
-            xPercent = (snappedFoot / totalFeet) * 100;
-            const maxPercent = 100 - ((draggedElement.width / totalFeet) * 100);
-            draggedElement.xPercent = Math.max(0, Math.min(xPercent, maxPercent));
-            
-            renderWorkspace();
-        };
-
-        const handleEnd = () => {
-            draggedElement = null;
-            window.removeEventListener(moveEvent, handleMove);
-            window.removeEventListener(endEvent, handleEnd);
-        };
-
-        window.addEventListener(moveEvent, handleMove, { passive: false });
-        window.addEventListener(endEvent, handleEnd);
-    }
-
-    // UI Input Change Watcher Bindings Mapping Matrix Loops
-    document.querySelectorAll('select').forEach(el => {
-        el.addEventListener('change', (e) => {
-            core.updateParameter(e.target.name, e.target.value);
-            renderWorkspace();
-        });
+    // Component Installation Status Button Toggle Triggers
+    this.setupToggleGroup(this.toggleWainscot, (val) => {
+      const isWainscot = val === 'true';
+      if (isWainscot) this.wainscotColorContainer.classList.remove('hidden');
+      else this.wainscotColorContainer.classList.add('hidden');
+      this.configurator.updateEnvelopeProperties({ wainscot: isWainscot });
     });
 
-    // Swatch Array Selections Binding Click Listeners
-    const bindSwatches = (containerId, stateKey) => {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        container.addEventListener('click', (e) => {
-            const btn = e.target.closest('.swatch-btn');
-            if (!btn) return;
-            container.querySelectorAll('.swatch-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            core.updateParameter(stateKey, btn.dataset.value);
-            renderWorkspace();
-        });
-    };
-
-    bindSwatches('swatches-roof', 'roofColor');
-    bindSwatches('swatches-wall', 'wallColor');
-    bindSwatches('swatches-trim', 'trimColor');
-    bindSwatches('swatches-wainscot', 'wainscotColor');
-
-    // Toggle row switches handling loops logic targets
-    const bindToggles = (toggleContainerId, stateKey, visibilityToggleCallback) => {
-        const row = document.getElementById(toggleContainerId);
-        if (!row) return;
-        row.addEventListener('click', (e) => {
-            const btn = e.target.closest('.btn-toggle');
-            if (!btn) return;
-            row.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            core.updateParameter(stateKey, btn.dataset.value);
-            if (visibilityToggleCallback) visibilityToggleCallback(btn.dataset.value);
-            renderWorkspace();
-        });
-    };
-
-    bindToggles('toggle-wainscot', 'hasWainscot', (val) => {
-        document.getElementById('wainscot-color-container').classList.toggle('hidden', val === 'false');
-    });
-    bindToggles('toggle-interior', 'hasInteriorLiner', (val) => {
-        document.getElementById('interior-color-container').classList.toggle('hidden', val === 'false');
+    this.setupToggleGroup(this.toggleInterior, (val) => {
+      const isInterior = val === 'true';
+      if (isInterior) this.interiorColorContainer.classList.remove('hidden');
+      else this.interiorColorContainer.classList.add('hidden');
+      this.configurator.updateEnvelopeProperties({ interiorLiner: isInterior });
     });
 
-    // Angle Elevation Mapping Tabs Navigation Controller Base Switches
-    document.getElementById('view-tabs').addEventListener('click', (e) => {
+    // Dynamic View Projection Angles Setup Links Tabs
+    if (this.viewTabs) {
+      this.viewTabs.addEventListener('click', (e) => {
         const tab = e.target.closest('.tab-btn');
         if (!tab) return;
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        this.viewTabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         tab.classList.add('active');
-        core.state.activeFace = tab.dataset.face;
-        document.getElementById('viewer-title').textContent = `${tab.textContent} Elevation Projection View`;
-        renderWorkspace();
-    });
-
-    // Component Assembly Openings Injectors Click Actions Triggers Router
-    document.querySelectorAll('.btn-inject').forEach(btn => {
-        btn.addEventListener('click', () => {
-            core.injectOpening(btn.dataset.type);
-            renderWorkspace();
-        });
-    });
-
-    // Active Selection Modifier Scaler Inputs Processing
-    modWidthInput.addEventListener('input', (e) => {
-        const selectedNode = core.state.openings.find(op => op.id === core.state.selectedNodeId);
-        if (selectedNode) {
-            selectedNode.width = Math.max(3, Math.min(Number(e.target.value), core.state.width));
-            renderWorkspace();
+        
+        const face = tab.getAttribute('data-face');
+        this.configurator.clearSelection();
+        this.configurator.setActiveFace(face);
+        
+        if (this.viewerTitle) {
+          this.viewerTitle.textContent = `${tab.textContent} Projection View`;
         }
-    });
+      });
+    }
 
-    modHeightInput.addEventListener('input', (e) => {
-        const selectedNode = core.state.openings.find(op => op.id === core.state.selectedNodeId);
-        if (selectedNode) {
-            selectedNode.height = Math.max(3, Math.min(Number(e.target.value), core.state.height - 2));
-            renderWorkspace();
+    // Apertures Assembly Injection Button Actions
+    if (this.injectorGrid) {
+      this.injectorGrid.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-inject');
+        if (!btn) return;
+        
+        const type = btn.getAttribute('data-type');
+        let width = 3.0, height = 6.8;
+
+        if (type === 'overhead' || type === 'bifold' || type === 'slider') {
+          width = 10.0;
+          height = 10.0;
+        } else if (type === 'window') {
+          width = 4.0;
+          height = 3.0;
         }
-    });
 
-    // Delete Component Track Processing Node Sequence Logic Action
-    document.getElementById('btn-delete').addEventListener('click', () => {
-        core.state.openings = core.state.openings.filter(op => op.id !== core.state.selectedNodeId);
-        core.state.selectedNodeId = null;
-        renderWorkspace();
-    });
+        this.configurator.addOpeningToActiveWall({ type, width, height });
+      });
+    }
 
-    // Duplicate Node Action
-    document.getElementById('btn-duplicate').addEventListener('click', () => {
-        const current = core.state.openings.find(op => op.id === core.state.selectedNodeId);
-        if (current) {
-            const clone = { ...current, id: 'node_' + Date.now(), xPercent: Math.min(current.xPercent + 8, 80) };
-            core.state.openings.push(clone);
-            core.state.selectedNodeId = clone.id;
-            renderWorkspace();
+    // Modifier Drawer Input Node Changes
+    if (this.modWidth) {
+      this.modWidth.addEventListener('change', () => this.updateActiveOpeningProperties());
+    }
+    if (this.modHeight) {
+      this.modHeight.addEventListener('change', () => this.updateActiveOpeningProperties());
+    }
+
+    if (this.btnDelete) {
+      this.btnDelete.addEventListener('click', () => {
+        const activeOp = this.getActiveSelectedOpening();
+        if (activeOp) {
+          this.configurator.removeOpeningFromActiveWall(activeOp.id);
         }
+      });
+    }
+
+    if (this.btnDuplicate) {
+      this.btnDuplicate.addEventListener('click', () => {
+        const activeOp = this.getActiveSelectedOpening();
+        if (activeOp) {
+          // Offsets position slightly inside transaction boundaries natively
+          this.configurator.addOpeningToActiveWall({
+            type: activeOp.type,
+            width: activeOp.width,
+            height: activeOp.height,
+            position: activeOp.position + 4.0 
+          });
+        }
+      });
+    }
+
+    // Lead Capture Submission Terminal Pipeline Processing
+    if (this.leadForm) {
+      this.leadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!this.validateContactForm()) return;
+
+        this.btnSubmitLead.disabled = true;
+        this.btnSubmitLead.textContent = "Processing Proposal Engineering Metrics...";
+
+        const formData = Object.fromEntries(new FormData(this.leadForm));
+        
+        try {
+          const res = await ApiModule.submitLead(formData, this.configurator.state);
+          if (res.success) {
+            alert(`Proposal Request Submitted Successfully!\nTracking Reference ID: ${res.trackingId}\nOur design leads will contact you shortly.`);
+            this.leadForm.reset();
+          }
+        } catch (err) {
+          alert("Submission pipeline failure. Please retry shortly.");
+        } finally {
+          this.btnSubmitLead.disabled = false;
+          this.btnSubmitLead.textContent = "Request Formal Estimate";
+        }
+      });
+    }
+  }
+
+  setupSwatchGroup(container, stateProperty) {
+    if (!container) return;
+    container.addEventListener('click', (e) => {
+      const btn = e.target.closest('.swatch-btn');
+      if (!btn) return;
+
+      container.querySelectorAll('.swatch-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const value = btn.getAttribute('data-value');
+      this.configurator.updateEnvelopeProperties({ [stateProperty]: value });
+    });
+  }
+
+  setupToggleGroup(container, callback) {
+    if (!container) return;
+    container.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-toggle');
+      if (!btn) return;
+
+      container.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      callback(btn.getAttribute('data-value'));
+    });
+  }
+
+  updateEnvelopeFromUI() {
+    this.configurator.updateEnvelopeProperties({
+      width: this.paramWidth.value,
+      length: this.paramLength.value,
+      height: this.paramHeight.value,
+      overhang: this.paramOverhang.value
+    });
+  }
+
+  updateActiveOpeningProperties() {
+    const activeOp = this.getActiveSelectedOpening();
+    if (!activeOp) return;
+
+    this.configurator.updateOpeningProperties(activeOp.id, {
+      width: this.modWidth.value,
+      height: this.modHeight.value
+    });
+  }
+
+  syncFormToState() {
+    const state = this.configurator.state;
+    if (this.paramWidth) this.paramWidth.value = state.width;
+    if (this.paramLength) this.paramLength.value = state.length;
+    if (this.paramHeight) this.paramHeight.value = state.height;
+    if (this.paramOverhang) this.paramOverhang.value = state.overhang;
+    if (this.paramSpecial) this.paramSpecial.value = state.specialNotes;
+  }
+
+  handleStateUpdate() {
+    const state = this.configurator.state;
+
+    // 1. Pass data model references directly over to structural viewport renderers
+    this.renderer.render(state);
+
+    // 2. Refresh dynamic totals display statement text nodes
+    const formattedPrice = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(state.pricing.total);
+    if (this.priceBadge) this.priceBadge.textContent = formattedPrice;
+    if (this.mobilePriceBadge) this.mobilePriceBadge.textContent = formattedPrice;
+
+    // 3. Sync and evaluate active selections updates
+    const activeOp = this.getActiveSelectedOpening();
+    if (activeOp) {
+      this.modWidth.value = activeOp.width;
+      this.modHeight.value = activeOp.height;
+      this.modifierCard.classList.remove('hidden');
+    } else {
+      this.modifierCard.classList.add('hidden');
+    }
+
+    // 4. Update the real-time configuration summary spec checklist presentation ledger
+    this.renderSummarySpecs(state);
+  }
+
+  getActiveSelectedOpening() {
+    const activeFaceId = this.configurator.state.activeFace;
+    return this.configurator.state.walls[activeFaceId].openings.find(op => op.selected);
+  }
+
+  renderSummarySpecs(state) {
+    if (!this.summarySpecList) return;
+    
+    const faceLabels = { front: 'Front View', rear: 'Rear View', left: 'Left Side View', right: 'Right Side View' };
+    const materialsList = calculateMaterialEstimates(state);
+    
+    // Count up distinct apertures globally across structural framing loops tracking
+    const totalOpeningsCount = Object.values(state.walls).reduce((sum, w) => sum + w.openings.length, 0);
+
+    let html = `
+      <li><span>Main Envelope Footprint Footing Dimensions:</span><span>${state.width}ft Width &times; ${state.length}ft Length &times; ${state.height}ft Height</span></li>
+      <li><span>Active Construction Plane Workspace Target Angle:</span><span>${faceLabels[state.activeFace]}</span></li>
+      <li><span>Total Configured Framing Assemblies Nodes:</span><span>${totalOpeningsCount} Active Nodes Inserted</span></li>
+    `;
+
+    // Append standard component counts summaries directly into the specification overview logs panels
+    materialsList.slice(0, 3).forEach(mat => {
+      html += `<li><span>Estimated Takeoff (${mat.category}):</span><span>${mat.quantity} ${mat.unit} (${mat.spec})</span></li>`;
     });
 
-    // Kick off initialization structural render layout map track sequence logic
-    renderWorkspace();
+    this.summarySpecList.innerHTML = html;
+  }
+
+  validateContactForm() {
+    let isValid = true;
+    const fields = ['name', 'email', 'phone', 'city', 'state'];
+    
+    fields.forEach(f => {
+      const el = document.getElementById(`lead-${f}`);
+      const err = document.getElementById(`err-${f}`);
+      if (el && err) {
+        if (!el.checkValidity()) {
+          err.textContent = el.validationMessage || "Invalid form entry.";
+          isValid = false;
+        } else {
+          err.textContent = "";
+        }
+      }
+    });
+
+    return isValid;
+  }
+}
+
+// Instantiate and secure the application runtime lifecycle loop context bindings at DOM execution ready triggers
+document.addEventListener('DOMContentLoaded', () => {
+  window.MoravianAppRootInstance = new App();
 });
-waiting 
